@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_home"
+        android:enabled="true"
+        android:icon="@drawable/ic_home"
+        android:title="Home" />
+    <item
+        android:id="@+id/nav_shorts"
+        android:enabled="true"
+        android:icon="@drawable/ic_series"
+        android:title="Series" />
+    <item
+        android:id="@+id/nav_comedy"
+        android:enabled="true"
+        android:icon="@drawable/ic_sport"
+        android:title="Comedy" />
+    <item
+        android:id="@+id/nav_movies"
+        android:enabled="true"
+        android:icon="@drawable/ic_movie"
+        android:title="Movies" />
+    <item
+        android:id="@+id/nav_diy"
+        android:enabled="true"
+        android:icon="@drawable/ic_diy"
+        android:title="DIY" />
+</menu>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="5dp">
+
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/shimmerChannelTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:visibility="visible"
+        app:shimmer_auto_start="true">
+
+        <View
+            android:layout_width="120dp"
+            android:layout_height="24dp"
+            android:background="@color/shimmer_placeholder_color"
+            android:radius="4dp" />
+    </com.facebook.shimmer.ShimmerFrameLayout>
+
+    <!-- Replace your TextView for channel title with: -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_margin="5dp">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/channelTitleTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/seeMoreButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_see_more"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone"
+           />
+    </LinearLayout>
+
+    <!-- Add shimmer container for horizontal RecyclerView -->
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/shimmerVideos"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="visible"
+        app:shimmer_auto_start="true">
+
+        <!-- A horizontally scrollable LinearLayout with placeholders -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <!-- Repeat placeholder item, e.g. 5 times -->
+            <View
+                android:layout_width="160dp"
+                android:layout_height="120dp"
+                android:layout_margin="4dp"
+                android:background="@color/shimmer_placeholder_color" />
+
+            <View
+                android:layout_width="160dp"
+                android:layout_height="120dp"
+                android:layout_margin="4dp"
+                android:background="@color/shimmer_placeholder_color" />
+
+            <View
+                android:layout_width="160dp"
+                android:layout_height="120dp"
+                android:layout_margin="4dp"
+                android:background="@color/shimmer_placeholder_color" />
+
+        </LinearLayout>
+    </com.facebook.shimmer.ShimmerFrameLayout>
+
+    <!-- Your RecyclerView -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewVideos"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+</LinearLayout>

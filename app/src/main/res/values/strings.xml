@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">VibeTube</string>
+    <string name="search_hint">Search amazing videos...</string>
+    <string name="popular_india">Popular in India</string>
+    <string name="trending_songs">Trending Songs</string>
+    <string name="movie_trailers">Movie Trailers</string>
+    <string name="comedy_videos">Comedy Videos</string>
+    <string name="diy_crafts">DIY &amp; Crafts</string>
+    <string name="advertisement">Advertisement</string>
+    <string name="powered_by_youtube">Powered by YouTube</string>
+    <string name="channel_thumbnail">Channel thumbnail</string>
+    <string name="search_videos">Search videos</string>
+    <string name="now_playing">Now Playing</string>
+    <string name="previous">Previous</string>
+    <string name="next">Next</string>
+    <string name="clear_search">Clear search</string>
+    <string name="search_icon">Search icon</string>
+    <string name="search_for_youtube_videos">Search for YouTube Videos</string>
+    <string name="search_for_youtube_channels">Search for YouTube Channels</string>
+    <string name="search_for_youtube_playlists">Search for YouTube Playlists</string>
+    <string name="enter_your_search_query">Enter your search query</string>
+    <string name="search_channels">Search channels...</string>
+    <string name="search_playlists">Search playlists...</string>
+    <string name="see_more">See More</string>
+    <string name="loading_more_videos">Loading more videos...</string>
+    <string name="advertisement_space">Advertisement Space</string>
+    <string name="playlist_thumbnail">Playlist thumbnail</string>
+    <string name="video_thumbnail">Video thumbnail</string>
+    <string name="_0_00">0:00</string>
+    <string name="install">Install</string>
+    <string name="up_next">Up Next</string>
+</resources>

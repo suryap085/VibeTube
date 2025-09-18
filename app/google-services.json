@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "436254934364",
+    "project_id": "vibetube-690e9",
+    "storage_bucket": "vibetube-690e9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:436254934364:android:7e60f02c99f2ee66d8ed99",
+        "android_client_info": {
+          "package_name": "com.video.vibetube"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhUAtmedpYZsfU_vYLrEzs4cBXixd4jW8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

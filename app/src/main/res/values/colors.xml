@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- YouTube-inspired Material Design 3 colors -->
+    <color name="primary">#FF0000</color>
+    <color name="primary_variant">#D32F2F</color>
+    <color name="secondary">#FF6B35</color>
+    <color name="secondary_variant">#FF8C42</color>
+    <color name="tertiary">#9C27B0</color>
+
+    <!-- Background colors -->
+    <color name="background_primary">#0F0F0F</color>
+    <color name="surface_primary">#1A1A1A</color>
+    <color name="surface_variant">#2D2D2D</color>
+    <color name="surface_container">#262626</color>
+
+    <!-- Text colors -->
+    <color name="on_primary">#FFFFFF</color>
+    <color name="on_surface">#FFFFFF</color>
+    <color name="on_surface_variant">#B3B3B3</color>
+    <color name="on_background">#FFFFFF</color>
+
+    <!-- Ad colors -->
+    <color name="ad_background">#1E1E1E</color>
+    <color name="ad_border">#404040</color>
+    <color name="ad_label">#FFB74D</color>
+
+    <!-- Navigation colors -->
+    <color name="nav_selected">#FF0000</color>
+    <color name="nav_unselected">#808080</color>
+
+    <!-- Additional colors for search -->
+    <color name="background_secondary">#1A1A1A</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B3B3B3</color>
+    <color name="text_tertiary">#808080</color>
+    <color name="card_background">#1E1E1E</color>
+    <color name="thumbnail_background">#2D2D2D</color>
+
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color> <!-- You might also need the base color for your day theme -->
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color> <!-- You might also need the base color for your day theme -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="surface_dark">#121212</color>
+    <color name="gray_light">#D3D3D3</color>
+    <color name="shimmer_placeholder_color">#DDDDDD</color>
+    <color name="gray">#808080</color>
+    <color name="shimmer_placeholder">#DDDDDD</color>
+
+
+</resources>
