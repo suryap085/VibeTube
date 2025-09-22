@@ -24,9 +24,12 @@ import com.video.vibetube.adapters.ChannelVideosAdapter
 import com.video.vibetube.models.Video
 import com.video.vibetube.network.createYouTubeService
 import com.video.vibetube.utils.AdManager
+import com.video.vibetube.utils.PlaylistManager
 import com.video.vibetube.utils.QuotaManager
 import com.video.vibetube.utils.SearchVideoCacheManager
+import com.video.vibetube.utils.SocialManager
 import com.video.vibetube.utils.UploadsPlaylistCache
+import com.video.vibetube.utils.UserDataManager
 import com.video.vibetube.utils.Utility.parseDuration
 import kotlinx.coroutines.*
 import androidx.core.content.edit
@@ -41,6 +44,9 @@ class ChannelVideosActivity : AppCompatActivity() {
     private lateinit var quotaManager: QuotaManager
     private lateinit var uploadsPlaylistCache: UploadsPlaylistCache
     private lateinit var videosCache: SearchVideoCacheManager
+    private lateinit var userDataManager: UserDataManager
+    private lateinit var socialManager: SocialManager
+    private lateinit var playlistManager: PlaylistManager
     private val pageTokenPrefs by lazy { getSharedPreferences("video_page_tokens", MODE_PRIVATE) }
     private val videos = mutableListOf<Video>()
     private val listItems = mutableListOf<Any>()
@@ -126,18 +132,30 @@ class ChannelVideosActivity : AppCompatActivity() {
             }
         }
 
-        adapter = ChannelVideosAdapter(listItems) { video ->
-            val currentIndex = videos.indexOfFirst { it.videoId == video.videoId }
-            if (currentIndex == -1) {
-                Toast.makeText(this, "Video not found.", Toast.LENGTH_SHORT).show()
-                return@ChannelVideosAdapter
-            }
-            val intent = Intent(this, YouTubePlayerActivity::class.java).apply {
-                putParcelableArrayListExtra("VIDEOS", ArrayList(videos))
-                putExtra("CURRENT_INDEX", currentIndex)
-            }
-            startActivity(intent)
-        }
+        // Initialize managers
+        userDataManager = UserDataManager(this)
+        socialManager = SocialManager.getInstance(this)
+        playlistManager = PlaylistManager.getInstance(this)
+
+        adapter = ChannelVideosAdapter(
+            listItems,
+            { video ->
+                val currentIndex = videos.indexOfFirst { it.videoId == video.videoId }
+                if (currentIndex == -1) {
+                    Toast.makeText(this, "Video not found.", Toast.LENGTH_SHORT).show()
+                    return@ChannelVideosAdapter
+                }
+                val intent = Intent(this, YouTubePlayerActivity::class.java).apply {
+                    putParcelableArrayListExtra("VIDEOS", ArrayList(videos))
+                    putExtra("CURRENT_INDEX", currentIndex)
+                }
+                startActivity(intent)
+            },
+            this, // lifecycleOwner
+            userDataManager,
+            socialManager,
+            playlistManager
+        )
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
 

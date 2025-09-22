@@ -85,11 +85,54 @@
             android:textColor="@color/gray_light"
             android:textSize="14sp" />
 
+        <!-- Video Action Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp">
+
+            <ImageButton
+                android:id="@+id/player_favorite_button"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Add to favorites"
+                android:padding="12dp"
+                android:src="@drawable/ic_favorite_border"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/player_playlist_button"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Add to playlist"
+                android:padding="12dp"
+                android:src="@drawable/ic_playlist_add"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/player_share_button"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Share video"
+                android:padding="12dp"
+                android:src="@drawable/ic_share"
+                app:tint="@color/white" />
+
+        </LinearLayout>
+
         <!-- Compliant Navigation Buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="8dp"
             android:gravity="center"
             android:orientation="horizontal">
 

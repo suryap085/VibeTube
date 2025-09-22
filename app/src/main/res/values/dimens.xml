@@ -1,4 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="_10sp">10sp</dimen>
+
+    <!-- Navigation Drawer -->
+    <dimen name="nav_header_height">200dp</dimen>
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+
+    <!-- Library Components -->
+    <dimen name="library_item_spacing">8dp</dimen>
+    <dimen name="library_section_padding">16dp</dimen>
+    <dimen name="achievement_card_height">120dp</dimen>
+    <dimen name="stats_card_height">80dp</dimen>
+
+    <!-- Video Cards -->
+    <dimen name="video_card_corner_radius">8dp</dimen>
+    <dimen name="video_card_elevation">4dp</dimen>
+    <dimen name="video_thumbnail_height">180dp</dimen>
+
+    <!-- Buttons and FABs -->
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="button_corner_radius">8dp</dimen>
+
+    <!-- Text Sizes -->
+    <dimen name="text_size_large">18sp</dimen>
+    <dimen name="text_size_medium">16sp</dimen>
+    <dimen name="text_size_small">14sp</dimen>
+    <dimen name="text_size_caption">12sp</dimen>
 </resources>

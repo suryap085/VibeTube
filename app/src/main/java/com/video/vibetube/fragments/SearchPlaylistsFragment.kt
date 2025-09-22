@@ -3,17 +3,22 @@ package com.video.vibetube.fragments
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -26,6 +31,7 @@ import com.video.vibetube.models.YouTubeSearchItem
 import com.video.vibetube.network.createYouTubeService
 import com.video.vibetube.utils.NetworkMonitor
 import com.video.vibetube.utils.QuotaManager
+import com.video.vibetube.utils.SocialManager
 import com.video.vibetube.utils.SearchPlaylistsCacheManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -46,6 +52,7 @@ class SearchPlaylistsFragment : Fragment() {
     private val youtubeService = createYouTubeService()
     private lateinit var quotaManager: QuotaManager
     private lateinit var networkMonitor: NetworkMonitor
+    private lateinit var socialManager: SocialManager
     private lateinit var cacheManager: SearchPlaylistsCacheManager
 
     private val playlistResults = mutableListOf<YouTubeSearchItem>()
@@ -71,14 +78,16 @@ class SearchPlaylistsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Initialize dependencies first
+        quotaManager = QuotaManager(requireContext())
+        networkMonitor = NetworkMonitor(requireContext())
+        socialManager = SocialManager.getInstance(requireContext())
+        cacheManager = SearchPlaylistsCacheManager(requireContext())
+
         initViews(view)
         setupRecyclerView()
         setupSearchFunctionality()
         setupSwipeRefresh()
-
-        quotaManager = QuotaManager(requireContext())
-        networkMonitor = NetworkMonitor(requireContext())
-        cacheManager = SearchPlaylistsCacheManager(requireContext())
     }
 
     private fun initViews(view: View) {
@@ -103,7 +112,9 @@ class SearchPlaylistsFragment : Fragment() {
                 }
                 startActivity(intent)
             },
-            onLoadMore = { loadMoreResults() }
+            onLoadMore = { loadMoreResults() },
+            lifecycleOwner = this@SearchPlaylistsFragment,
+            socialManager = socialManager
         )
 
         recyclerView.layoutManager = LinearLayoutManager(context)
@@ -116,11 +127,11 @@ class SearchPlaylistsFragment : Fragment() {
             clearSearchResults()
         }
 
-        searchEditText.addTextChangedListener(object : android.text.TextWatcher {
+        searchEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
 
-            override fun afterTextChanged(s: android.text.Editable?) {
+            override fun afterTextChanged(s: Editable?) {
                 val query = s?.toString()?.trim() ?: ""
                 searchJob?.cancel()
 
@@ -205,8 +216,7 @@ class SearchPlaylistsFragment : Fragment() {
 
             } catch (e: Exception) {
                 Log.e(TAG, "Playlist search failed for query: '$query'", e)
-                Toast.makeText(requireContext(), "Search failed: ${e.message}", Toast.LENGTH_SHORT)
-                    .show()
+                safeShowToast("Search failed: ${e.message}")
             } finally {
                 emptyStateLayout.visibility = View.GONE
                 isLoading = false
@@ -219,11 +229,11 @@ class SearchPlaylistsFragment : Fragment() {
     private fun loadMoreResults() {
         if (isLoading || nextPageToken.isEmpty() || currentQuery.isEmpty()) return
         if (!networkMonitor.isConnected()) {
-            Toast.makeText(requireContext(), "No Internet Connection", Toast.LENGTH_SHORT).show()
+            safeShowToast("No Internet Connection")
             return
         }
         if (quotaManager.isQuotaExceeded()) {
-            Toast.makeText(requireContext(), "API Quota Exceeded", Toast.LENGTH_SHORT).show()
+            safeShowToast("API Quota Exceeded")
             return
         }
 
@@ -283,7 +293,9 @@ class SearchPlaylistsFragment : Fragment() {
     private class PlaylistsAdapter(
         private val playlists: List<YouTubeSearchItem>,
         private val onPlaylistClick: (YouTubeSearchItem) -> Unit,
-        private val onLoadMore: () -> Unit
+        private val onLoadMore: () -> Unit,
+        private val lifecycleOwner: LifecycleOwner,
+        private val socialManager: SocialManager
     ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         companion object {
@@ -295,12 +307,13 @@ class SearchPlaylistsFragment : Fragment() {
             return if (position == playlists.size) VIEW_TYPE_LOADING else VIEW_TYPE_VIDEO
         }
 
-        class PlaylistViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        inner class PlaylistViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
             val playlistThumbnail: ImageView = itemView.findViewById(R.id.channelThumbnail)
 
             //val playlistTitle: TextView = itemView.findViewById(R.id.playlistTitle)
             val channelTitle: TextView = itemView.findViewById(R.id.channelTitle)
             val playlistDescription: TextView = itemView.findViewById(R.id.channelDescription)
+            private val shareButton: ImageButton = itemView.findViewById(R.id.shareButton)
 
             fun bind(channel: YouTubeSearchItem) {
                 // Load thumbnail
@@ -317,6 +330,33 @@ class SearchPlaylistsFragment : Fragment() {
                 channelTitle.text = channel.snippet.channelTitle
                 playlistDescription.text = channel.snippet.description
 
+                // Setup share button
+                setupShareButton(channel)
+            }
+
+
+
+            /**
+             * Setup share button functionality
+             */
+            private fun setupShareButton(playlist: YouTubeSearchItem) {
+                shareButton.setOnClickListener {
+                    try {
+                        socialManager.sharePlaylist(playlist.id.videoId, playlist.snippet.title)
+                    } catch (e: Exception) {
+                        Log.e("SearchPlaylistsAdapter", "Error sharing playlist", e)
+                        showToast("Failed to share playlist")
+                    }
+                }
+            }
+
+
+
+            /**
+             * Show toast message
+             */
+            private fun showToast(message: String) {
+                Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -364,6 +404,12 @@ class SearchPlaylistsFragment : Fragment() {
         override fun getItemCount(): Int {
             // Add 1 for loading view if there are videos
             return playlists.size + if (playlists.isNotEmpty()) 1 else 0
+        }
+    }
+
+    private fun safeShowToast(message: String) {
+        if (isAdded && context != null) {
+            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
         }
     }
 }

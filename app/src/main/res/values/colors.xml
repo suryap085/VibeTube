@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- YouTube-inspired Material Design 3 colors -->
-    <color name="primary">#FF0000</color>
-    <color name="primary_variant">#D32F2F</color>
-    <color name="secondary">#FF6B35</color>
-    <color name="secondary_variant">#FF8C42</color>
-    <color name="tertiary">#9C27B0</color>
+    <!-- Modern Material Design 3 colors for enhanced visibility -->
+    <color name="primary">#6366F1</color> <!-- Modern indigo for better accessibility -->
+    <color name="primary_variant">#4F46E5</color> <!-- Deeper indigo variant -->
+    <color name="secondary">#EC4899</color> <!-- Vibrant pink for modern appeal -->
+    <color name="secondary_variant">#DB2777</color> <!-- Deeper pink variant -->
+    <color name="tertiary">#8B5CF6</color> <!-- Modern purple for accents -->
 
     <!-- Background colors -->
     <color name="background_primary">#0F0F0F</color>
@@ -25,7 +25,7 @@
     <color name="ad_label">#FFB74D</color>
 
     <!-- Navigation colors -->
-    <color name="nav_selected">#FF0000</color>
+    <color name="nav_selected">#6366F1</color> <!-- Updated to match new primary -->
     <color name="nav_unselected">#808080</color>
 
     <!-- Additional colors for search -->
@@ -35,6 +35,8 @@
     <color name="text_tertiary">#808080</color>
     <color name="card_background">#1E1E1E</color>
     <color name="thumbnail_background">#2D2D2D</color>
+
+
 
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color> <!-- You might also need the base color for your day theme -->
@@ -48,6 +50,56 @@
     <color name="shimmer_placeholder_color">#DDDDDD</color>
     <color name="gray">#808080</color>
     <color name="shimmer_placeholder">#DDDDDD</color>
+
+    <!-- Category colors - Enhanced for better visibility -->
+    <color name="category_music">#EC4899</color> <!-- Updated to match secondary -->
+    <color name="category_education">#3B82F6</color> <!-- Modern blue -->
+    <color name="category_gaming">#8B5CF6</color> <!-- Updated to match tertiary -->
+    <color name="category_diy">#F59E0B</color> <!-- Modern amber -->
+    <color name="category_entertainment">#10B981</color> <!-- Modern emerald -->
+    <color name="category_default">#6B7280</color> <!-- Modern gray -->
+
+    <!-- Achievement Colors -->
+    <color name="achievement_bronze">#CD7F32</color>
+    <color name="achievement_silver">#C0C0C0</color>
+    <color name="achievement_gold">#FFD700</color>
+    <color name="achievement_platinum">#E5E4E2</color>
+
+    <!-- Achievement category colors - Enhanced for better visibility -->
+    <color name="achievement_category_viewing">#3B82F6</color> <!-- Modern blue -->
+    <color name="achievement_category_exploration">#10B981</color> <!-- Modern emerald -->
+    <color name="achievement_category_organization">#F59E0B</color> <!-- Modern amber -->
+    <color name="achievement_category_consistency">#8B5CF6</color> <!-- Modern purple -->
+    <color name="achievement_category_milestones">#EF4444</color> <!-- Modern red -->
+    <color name="achievement_category_default">#6B7280</color> <!-- Modern gray -->
+
+    <!-- Difficulty colors - Enhanced for better visibility -->
+    <color name="difficulty_easy">#10B981</color> <!-- Modern emerald -->
+    <color name="difficulty_medium">#F59E0B</color> <!-- Modern amber -->
+    <color name="difficulty_hard">#EF4444</color> <!-- Modern red -->
+
+    <!-- Achievement UI colors -->
+    <color name="achievement_locked_background">#2A2A2A</color>
+    <color name="achievement_locked_title">#888888</color>
+    <color name="achievement_locked_description">#666666</color>
+    <color name="achievement_unlocked_background">#E8F5E8</color>
+    <color name="achievement_unlocked_stroke">#4CAF50</color>
+    <color name="achievement_unlocked_title">#2E7D32</color>
+    <color name="achievement_unlocked_description">#388E3C</color>
+    <color name="difficulty_expert">#8B5CF6</color> <!-- Modern purple -->
+    <color name="difficulty_default">#6B7280</color> <!-- Modern gray -->
+
+    <!-- Progress colors -->
+    <color name="progress_track">#E0E0E0</color>
+
+    <!-- Status colors - Enhanced for better visibility -->
+    <color name="success">#10B981</color> <!-- Modern emerald -->
+    <color name="error">#EF4444</color> <!-- Modern red -->
+    <color name="warning">#F59E0B</color> <!-- Modern amber -->
+
+    <!-- Surface colors -->
+    <color name="surface">#1E1E1E</color>
+    <color name="divider">#404040</color>
 
 
 </resources>

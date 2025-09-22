@@ -39,7 +39,12 @@ import com.video.vibetube.models.YouTubeSearchItem
 import com.video.vibetube.network.YouTubeApiService
 import com.video.vibetube.network.createYouTubeService
 import com.video.vibetube.utils.Utility
+import com.video.vibetube.utils.UserDataManager
+import com.video.vibetube.utils.SocialManager
 import kotlinx.coroutines.launch
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 
 class YouTubePlayerActivity : AppCompatActivity() {
 
@@ -52,6 +57,9 @@ class YouTubePlayerActivity : AppCompatActivity() {
     private lateinit var channelTextView: TextView
     private lateinit var nextButton: ImageButton
     private lateinit var previousButton: ImageButton
+    private lateinit var playerFavoriteButton: ImageButton
+    private lateinit var playerPlaylistButton: ImageButton
+    private lateinit var playerShareButton: ImageButton
     private lateinit var headerLayout: LinearLayout
     private lateinit var videoInfoLayout: LinearLayout
     private lateinit var playerContainer: ConstraintLayout
@@ -70,6 +78,24 @@ class YouTubePlayerActivity : AppCompatActivity() {
     private lateinit var relatedVideosAdapter: RelatedVideosAdapter
     private val apiService: YouTubeApiService by lazy { createYouTubeService() }
 
+    // User Engagement Features
+    private lateinit var userDataManager: UserDataManager
+    private lateinit var playlistManager: com.video.vibetube.utils.PlaylistManager
+    private lateinit var socialManager: SocialManager
+    private var watchStartTime: Long = 0L
+    private var lastProgressUpdate: Long = 0L
+    private var currentVideoProgress: Float = 0.0f
+    private var videoDuration: Float = 0.0f
+    private var progressTrackingJob: Job? = null
+    private var hasStartedTracking: Boolean = false
+
+    // Resume functionality
+    private var resumePosition: Float = 0f
+    private var isFromHistory: Boolean = false
+
+    // Cumulative watch duration tracking
+    private var baseWatchDuration: Long = 0L // Previous watch duration from history
+
     private val onBackPressedCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
             if (isFullscreen) {
@@ -86,6 +112,12 @@ class YouTubePlayerActivity : AppCompatActivity() {
 
         onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
         relatedVideoList = emptyList()
+
+        // Initialize managers
+        userDataManager = UserDataManager(this)
+        playlistManager = com.video.vibetube.utils.PlaylistManager.getInstance(this)
+        socialManager = SocialManager.getInstance(this)
+
         setupViews()
         loadVideoData()
         setupYouTubePlayer()
@@ -97,6 +129,9 @@ class YouTubePlayerActivity : AppCompatActivity() {
         channelTextView = findViewById(R.id.channel_name)
         nextButton = findViewById(R.id.next_button)
         previousButton = findViewById(R.id.previous_button)
+        playerFavoriteButton = findViewById(R.id.player_favorite_button)
+        playerPlaylistButton = findViewById(R.id.player_playlist_button)
+        playerShareButton = findViewById(R.id.player_share_button)
         headerLayout = findViewById(R.id.layout_back)
         videoInfoLayout = findViewById(R.id.layout_next_prev)
         playerContainer = findViewById(R.id.player_container)
@@ -118,6 +153,8 @@ class YouTubePlayerActivity : AppCompatActivity() {
             openVideoInYouTubeApp()
             true
         }
+
+        setupActionButtons()
     }
 
     private fun setupRelatedVideos() {
@@ -147,10 +184,84 @@ class YouTubePlayerActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Setup action buttons for video player
+     * YouTube Policy Compliance: Only operates on user's local data
+     */
+    private fun setupActionButtons() {
+        // Setup favorite button
+        playerFavoriteButton.setOnClickListener {
+            if (videos.isNotEmpty() && currentVideoIndex in videos.indices) {
+                val currentVideo = videos[currentVideoIndex]
+                lifecycleScope.launch {
+                    try {
+                        val isFavorite = userDataManager.isFavorite(currentVideo.videoId)
+                        if (isFavorite) {
+                            userDataManager.removeFromFavorites(currentVideo.videoId)
+                            updateFavoriteButtonState(false)
+                            Toast.makeText(this@YouTubePlayerActivity, "Removed from favorites", Toast.LENGTH_SHORT).show()
+                        } else {
+                            val success = userDataManager.addToFavorites(currentVideo, sourceContext = "player")
+                            if (success) {
+                                updateFavoriteButtonState(true)
+                                Toast.makeText(this@YouTubePlayerActivity, "Added to favorites", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(this@YouTubePlayerActivity, "Already in favorites or limit reached", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Toast.makeText(this@YouTubePlayerActivity, "Failed to update favorites", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
+        // Setup playlist button
+        playerPlaylistButton.setOnClickListener {
+            if (videos.isNotEmpty() && currentVideoIndex in videos.indices) {
+                val currentVideo = videos[currentVideoIndex]
+                playlistManager.showAddToPlaylistDialog(
+                    video = currentVideo,
+                    lifecycleOwner = this@YouTubePlayerActivity,
+                    onSuccess = { addedPlaylists ->
+                        if (addedPlaylists.isNotEmpty()) {
+                            Toast.makeText(
+                                this@YouTubePlayerActivity,
+                                "Added to ${addedPlaylists.joinToString(", ")}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            updatePlaylistButtonState(currentVideo)
+                        }
+                    },
+                    onError = { error ->
+                        Toast.makeText(this@YouTubePlayerActivity, error, Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+        }
+
+        // Setup share button
+        playerShareButton.setOnClickListener {
+            if (videos.isNotEmpty() && currentVideoIndex in videos.indices) {
+                val currentVideo = videos[currentVideoIndex]
+                try {
+                    socialManager.shareVideo(currentVideo)
+                } catch (e: Exception) {
+                    Toast.makeText(this@YouTubePlayerActivity, "Failed to share video", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
     private fun loadVideoData() {
         try {
             videos = intent.getParcelableArrayListExtra("VIDEOS") ?: emptyList()
             currentVideoIndex = intent.getIntExtra("CURRENT_INDEX", 0)
+
+            // Extract resume parameters
+            resumePosition = intent.getFloatExtra("RESUME_POSITION", 0f)
+            isFromHistory = intent.getBooleanExtra("FROM_HISTORY", false)
+
             if (videos.isNotEmpty()) {
                 updateNavigationButtons()
             } else {
@@ -175,10 +286,21 @@ class YouTubePlayerActivity : AppCompatActivity() {
         youTubePlayerView.addFullscreenListener(object : FullscreenListener {
             override fun onEnterFullscreen(fullscreenView: View, exitFullscreen: () -> Unit) {
                 isFullscreen = true
-                requestedOrientation = if (isCurrentVideoShort()) {
+
+                // Determine orientation based on video duration
+                val isShort = isCurrentVideoShort()
+                requestedOrientation = if (isShort) {
                     ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
                 } else {
                     ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                }
+
+                // Debug logging
+                if (BuildConfig.DEBUG) {
+                    val currentVideo = if (videos.isNotEmpty() && currentVideoIndex in videos.indices) {
+                        videos[currentVideoIndex]
+                    } else null
+                    android.util.Log.d("YouTubePlayer", "FullscreenListener - Video: ${currentVideo?.title}, Duration: ${currentVideo?.duration}, IsShort: $isShort, Orientation: ${if (isShort) "Portrait" else "Landscape"}")
                 }
                 headerLayout.isVisible = false
                 videoInfoLayout.isVisible = false
@@ -239,12 +361,15 @@ class YouTubePlayerActivity : AppCompatActivity() {
                 youTubePlayer: YouTubePlayer,
                 state: PlayerConstants.PlayerState
             ) {
-                if (state == PlayerConstants.PlayerState.ENDED && currentVideoIndex < relatedVideoList.size - 1) {
-                    playNextVideo()
-                }
-                if (state == PlayerConstants.PlayerState.PLAYING) {
-                    uiController?.showUi(true)
-                }
+                handlePlayerStateChange(youTubePlayer, state)
+            }
+
+            override fun onVideoDuration(youTubePlayer: YouTubePlayer, duration: Float) {
+                videoDuration = duration
+            }
+
+            override fun onCurrentSecond(youTubePlayer: YouTubePlayer, second: Float) {
+                updateWatchProgress(second)
             }
         }, options)
     }
@@ -300,10 +425,21 @@ class YouTubePlayerActivity : AppCompatActivity() {
     private fun setFullscreenMode() {
         if (isFullscreen) return
         isFullscreen = true
-        requestedOrientation = if (isCurrentVideoShort()) {
+
+        // Determine orientation based on video duration
+        val isShort = isCurrentVideoShort()
+        requestedOrientation = if (isShort) {
             ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         } else {
             ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        }
+
+        // Debug logging to help identify issues
+        if (BuildConfig.DEBUG) {
+            val currentVideo = if (videos.isNotEmpty() && currentVideoIndex in videos.indices) {
+                videos[currentVideoIndex]
+            } else null
+            android.util.Log.d("YouTubePlayer", "Fullscreen mode - Video: ${currentVideo?.title}, Duration: ${currentVideo?.duration}, IsShort: $isShort, Orientation: ${if (isShort) "Portrait" else "Landscape"}")
         }
         WindowCompat.getInsetsController(window, window.decorView).apply {
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -347,6 +483,16 @@ class YouTubePlayerActivity : AppCompatActivity() {
     }
 
     private fun playCurrentVideo() {
+        // Reset tracking state for new video
+        resetTrackingState()
+
+        // Determine start position: use resume position for first video from history, 0f for others
+        val startPosition = if (isFromHistory && currentVideoIndex == 0 && resumePosition > 0f) {
+            resumePosition
+        } else {
+            0f
+        }
+
         if (relatedVideoList.isNotEmpty()) {
             if (!playerReady || currentVideoIndex !in relatedVideoList.indices) return
             val currentVideo: YouTubeSearchItem = relatedVideoList[currentVideoIndex]
@@ -354,10 +500,9 @@ class YouTubePlayerActivity : AppCompatActivity() {
                 Toast.makeText(this, "Invalid video", Toast.LENGTH_SHORT).show()
                 return
             }
-            youTubePlayer?.loadVideo(currentVideo.id.videoId, 0f)
+            youTubePlayer?.loadVideo(currentVideo.id.videoId, startPosition)
             updateVideoInfoRelated(currentVideo)
             updateNavigationButtons()
-            //fetchRelatedVideos(currentVideo.snippet.title)
         } else if (videos.isNotEmpty()) {
             if (!playerReady || currentVideoIndex !in videos.indices) return
             val currentVideo = videos[currentVideoIndex]
@@ -365,10 +510,22 @@ class YouTubePlayerActivity : AppCompatActivity() {
                 Toast.makeText(this, "Invalid video", Toast.LENGTH_SHORT).show()
                 return
             }
-            youTubePlayer?.loadVideo(currentVideo.videoId, 0f)
+            youTubePlayer?.loadVideo(currentVideo.videoId, startPosition)
             updateVideoInfo(currentVideo)
             updateNavigationButtons()
-            fetchRelatedVideos(currentVideo.title)
+            //fetchRelatedVideos(currentVideo.title)
+
+            // Show resume toast if starting from saved position
+            if (startPosition > 0f) {
+                val resumeTime = formatSecondsToTime(startPosition)
+                Toast.makeText(this, "Resuming from $resumeTime", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // Reset resume position after first video to prevent affecting navigation
+        if (currentVideoIndex == 0) {
+            resumePosition = 0f
+            isFromHistory = false
         }
     }
 
@@ -434,6 +591,9 @@ class YouTubePlayerActivity : AppCompatActivity() {
     }
 
     private fun playNextVideo() {
+        // Save current video progress before switching
+        finishWatchTracking()
+
         val hasNextInVideos = videos.isNotEmpty() && currentVideoIndex < videos.size - 1
         val hasNextInRelated =
             relatedVideoList.isNotEmpty() && currentVideoIndex < relatedVideoList.size - 1
@@ -447,6 +607,9 @@ class YouTubePlayerActivity : AppCompatActivity() {
     }
 
     private fun playPreviousVideo() {
+        // Save current video progress before switching
+        finishWatchTracking()
+
         if (currentVideoIndex > 0) {
             currentVideoIndex--
             playCurrentVideo()
@@ -459,6 +622,63 @@ class YouTubePlayerActivity : AppCompatActivity() {
         titleTextView.text = video.title
         channelTextView.text =
             if (video.channelTitle.isNotBlank()) "by ${video.channelTitle}" else ""
+
+        // Update action button states
+        updateFavoriteButtonState(video)
+        updatePlaylistButtonState(video)
+    }
+
+    /**
+     * Update favorite button state based on current video
+     */
+    private fun updateFavoriteButtonState(video: Video) {
+        lifecycleScope.launch {
+            try {
+                val isFavorite = userDataManager.isFavorite(video.videoId)
+                updateFavoriteButtonState(isFavorite)
+            } catch (e: Exception) {
+                // Handle error silently
+            }
+        }
+    }
+
+    /**
+     * Update favorite button visual state
+     */
+    private fun updateFavoriteButtonState(isFavorite: Boolean) {
+        if (isFavorite) {
+            playerFavoriteButton.setImageResource(R.drawable.ic_favorite)
+            playerFavoriteButton.setColorFilter(
+                androidx.core.content.ContextCompat.getColor(this, R.color.primary)
+            )
+        } else {
+            playerFavoriteButton.setImageResource(R.drawable.ic_favorite_border)
+            playerFavoriteButton.setColorFilter(
+                androidx.core.content.ContextCompat.getColor(this, R.color.white)
+            )
+        }
+    }
+
+    /**
+     * Update playlist button state based on current video
+     */
+    private fun updatePlaylistButtonState(video: Video) {
+        lifecycleScope.launch {
+            try {
+                val isInPlaylist = playlistManager.isVideoInAnyPlaylist(video.videoId)
+                playerPlaylistButton.setImageResource(
+                    if (isInPlaylist) R.drawable.ic_playlist_add_check else R.drawable.ic_playlist_add
+                )
+                playerPlaylistButton.setColorFilter(
+                    if (isInPlaylist)
+                        androidx.core.content.ContextCompat.getColor(this@YouTubePlayerActivity, R.color.primary)
+                    else
+                        androidx.core.content.ContextCompat.getColor(this@YouTubePlayerActivity, R.color.white)
+                )
+            } catch (e: Exception) {
+                // Handle error silently
+            }
+        }
     }
 
     private fun updateVideoInfoRelated(video: YouTubeSearchItem) {
@@ -494,21 +714,215 @@ class YouTubePlayerActivity : AppCompatActivity() {
     }
 
     private fun isCurrentVideoShort(): Boolean {
-        if (relatedVideoList.isEmpty() || currentVideoIndex !in relatedVideoList.indices) return false
-        val durationStr = relatedVideoList[currentVideoIndex].duration
-        return Utility.parseAnyDurationToSeconds(durationStr) < 60
+        // Check the main videos list first (primary video source)
+        if (videos.isNotEmpty() && currentVideoIndex in videos.indices) {
+            val currentVideo = videos[currentVideoIndex]
+            if (currentVideo.duration.isNotEmpty()) {
+                val durationSeconds = Utility.parseAnyDurationToSeconds(currentVideo.duration)
+                val isShort = durationSeconds < 60
+
+                // Debug logging
+                if (BuildConfig.DEBUG) {
+                    android.util.Log.d("YouTubePlayer", "Video duration check - Title: ${currentVideo.title}, Duration: ${currentVideo.duration}, Seconds: $durationSeconds, IsShort: $isShort")
+                }
+
+                return isShort
+            } else if (BuildConfig.DEBUG) {
+                android.util.Log.d("YouTubePlayer", "Main video has no duration - Title: ${currentVideo.title}")
+            }
+        }
+
+        // Fallback to related videos list if main video doesn't have duration
+        if (relatedVideoList.isNotEmpty() && currentVideoIndex in relatedVideoList.indices) {
+            val durationStr = relatedVideoList[currentVideoIndex].duration
+            if (durationStr.isNotEmpty()) {
+                val durationSeconds = Utility.parseAnyDurationToSeconds(durationStr)
+                val isShort = durationSeconds < 60
+
+                // Debug logging
+                if (BuildConfig.DEBUG) {
+                    android.util.Log.d("YouTubePlayer", "Related video duration check - Duration: $durationStr, Seconds: $durationSeconds, IsShort: $isShort")
+                }
+
+                return isShort
+            }
+        }
+
+        // Default to false (landscape) if no duration information is available
+        if (BuildConfig.DEBUG) {
+            android.util.Log.d("YouTubePlayer", "No duration information available - defaulting to landscape")
+        }
+        return false
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            if (!isFullscreen) setFullscreenMode()
-        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            if (isFullscreen) exitFullscreen()
+
+        // Only handle automatic orientation changes when already in fullscreen mode
+        // This prevents interference with manual fullscreen button clicks
+        if (isFullscreen) {
+            val isShort = isCurrentVideoShort()
+            val shouldBePortrait = isShort
+            val shouldBeLandscape = !isShort
+
+            if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT && shouldBeLandscape) {
+                // Video should be in landscape but device is in portrait - exit fullscreen
+                exitFullscreen()
+            } else if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE && shouldBePortrait) {
+                // Video should be in portrait but device is in landscape - exit fullscreen
+                exitFullscreen()
+            }
+        }
+    }
+
+    /**
+     * Handle YouTube player state changes and track watch history
+     */
+    private fun handlePlayerStateChange(youTubePlayer: YouTubePlayer, state: PlayerConstants.PlayerState) {
+        when (state) {
+            PlayerConstants.PlayerState.PLAYING -> {
+                startWatchTracking()
+                uiController?.showUi(true)
+            }
+            PlayerConstants.PlayerState.PAUSED -> {
+                pauseWatchTracking()
+            }
+            PlayerConstants.PlayerState.ENDED -> {
+                finishWatchTracking()
+                if (currentVideoIndex < relatedVideoList.size - 1) {
+                    playNextVideo()
+                }
+            }
+            PlayerConstants.PlayerState.BUFFERING -> {
+                // Continue tracking during buffering
+            }
+            else -> {
+                // Handle other states if needed
+            }
+        }
+    }
+
+    /**
+     * Start tracking watch time and progress
+     */
+    private fun startWatchTracking() {
+        if (!hasStartedTracking) {
+            watchStartTime = System.currentTimeMillis()
+            hasStartedTracking = true
+
+            // Load existing watch duration for cumulative tracking
+            if (videos.isNotEmpty() && currentVideoIndex < videos.size) {
+                val currentVideo = videos[currentVideoIndex]
+                lifecycleScope.launch {
+                    try {
+                        baseWatchDuration = userDataManager.getExistingWatchDuration(currentVideo.videoId)
+                    } catch (e: Exception) {
+                        baseWatchDuration = 0L
+                        e.printStackTrace()
+                    }
+                }
+            }
+        }
+
+        // Start progress tracking coroutine
+        progressTrackingJob?.cancel()
+        progressTrackingJob = lifecycleScope.launch {
+            while (true) {
+                delay(5000) // Update every 5 seconds
+                saveWatchProgress()
+            }
+        }
+    }
+
+    /**
+     * Pause watch tracking
+     */
+    private fun pauseWatchTracking() {
+        progressTrackingJob?.cancel()
+        saveWatchProgress()
+    }
+
+    /**
+     * Finish watch tracking and save final progress
+     */
+    private fun finishWatchTracking() {
+        progressTrackingJob?.cancel()
+        saveWatchProgress()
+        resetTrackingState()
+    }
+
+    /**
+     * Update current watch progress
+     */
+    private fun updateWatchProgress(currentSecond: Float) {
+        if (videoDuration > 0) {
+            currentVideoProgress = currentSecond / videoDuration
+            lastProgressUpdate = System.currentTimeMillis()
+        }
+    }
+
+    /**
+     * Save watch progress to UserDataManager
+     */
+    private fun saveWatchProgress() {
+        if (!hasStartedTracking || videos.isEmpty() || currentVideoIndex >= videos.size) {
+            return
+        }
+
+        val currentVideo = videos[currentVideoIndex]
+        val currentSessionDuration = System.currentTimeMillis() - watchStartTime
+
+        // Only save if user has watched for at least 10 seconds in current session
+        if (currentSessionDuration >= 10000) {
+            lifecycleScope.launch {
+                try {
+                    // Note: UserDataManager will handle cumulative duration calculation
+                    // We pass only the current session duration, and it will add to existing duration
+                    userDataManager.addToWatchHistory(
+                        video = currentVideo,
+                        watchProgress = currentVideoProgress.coerceIn(0.0f, 1.0f),
+                        watchDuration = currentSessionDuration
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    // Silently handle errors - don't interrupt user experience
+                }
+            }
+        }
+    }
+
+    /**
+     * Reset tracking state for next video
+     */
+    private fun resetTrackingState() {
+        hasStartedTracking = false
+        watchStartTime = 0L
+        currentVideoProgress = 0.0f
+        videoDuration = 0.0f
+        lastProgressUpdate = 0L
+        baseWatchDuration = 0L
+    }
+
+    /**
+     * Format seconds to readable time string (e.g., "5:30" or "1:05:30")
+     */
+    private fun formatSecondsToTime(seconds: Float): String {
+        val totalSeconds = seconds.toInt()
+        val hours = totalSeconds / 3600
+        val minutes = (totalSeconds % 3600) / 60
+        val secs = totalSeconds % 60
+
+        return if (hours > 0) {
+            String.format("%d:%02d:%02d", hours, minutes, secs)
+        } else {
+            String.format("%d:%02d", minutes, secs)
         }
     }
 
     override fun onDestroy() {
+        // Save final watch progress before destroying
+        finishWatchTracking()
+
         super.onDestroy()
         youTubePlayerView.release()
     }

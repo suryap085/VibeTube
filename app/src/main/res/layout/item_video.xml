@@ -3,14 +3,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="12dp"
-    android:layout_marginVertical="8dp"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="12dp"
     app:cardBackgroundColor="@color/surface_primary"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="8dp"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="12dp"
     app:rippleColor="@color/primary_variant"
     app:strokeColor="@color/surface_variant"
-    app:strokeWidth="1dp">
+    app:strokeWidth="2dp"
+    android:foreground="?android:attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,7 +23,7 @@
         <!-- Video Thumbnail with Play Overlay -->
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="200dp">
+            android:layout_height="220dp">
 
             <ImageView
                 android:id="@+id/thumbnailImageView"
@@ -30,12 +33,13 @@
                 android:scaleType="centerCrop" />
 
             <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_gravity="center"
                 android:background="@drawable/play_button_background"
                 android:src="@drawable/ic_play_arrow"
-                app:tint="@color/on_primary" />
+                app:tint="@color/on_primary"
+                android:elevation="4dp" />
 
             <!-- Duration Badge -->
             <TextView
@@ -71,8 +75,9 @@
                 android:fontFamily="@font/roboto_medium"
                 android:maxLines="2"
                 android:textColor="@color/on_surface"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:lineSpacingMultiplier="1.2" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -107,6 +112,51 @@
                 android:maxLines="2"
                 android:textColor="@color/on_surface_variant"
                 android:textSize="12sp" />
+
+            <!-- Action Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal"
+                android:gravity="end">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/favoriteButton"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="8dp"
+                    app:icon="@drawable/ic_favorite_border"
+                    app:iconTint="@color/text_secondary"
+                    app:iconSize="24dp"
+                    android:contentDescription="Add to favorites"
+                    app:cornerRadius="24dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/playlistButton"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="8dp"
+                    app:icon="@drawable/ic_playlist_add"
+                    app:iconTint="@color/text_secondary"
+                    app:iconSize="24dp"
+                    android:contentDescription="Add to playlist"
+                    app:cornerRadius="24dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/shareButton"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    app:icon="@drawable/ic_share"
+                    app:iconTint="@color/text_secondary"
+                    app:iconSize="24dp"
+                    android:contentDescription="Share video"
+                    app:cornerRadius="24dp" />
+
+            </LinearLayout>
 
         </LinearLayout>
 

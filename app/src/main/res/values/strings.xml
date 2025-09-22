@@ -29,4 +29,45 @@
     <string name="_0_00">0:00</string>
     <string name="install">Install</string>
     <string name="up_next">Up Next</string>
+
+    <!-- Navigation Drawer -->
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <!-- Library Features -->
+    <string name="library_title">Library</string>
+    <string name="watch_history">Watch History</string>
+    <string name="favorites">Favorites</string>
+    <string name="my_playlists">My Playlists</string>
+    <string name="achievements">Achievements</string>
+    <string name="your_stats">Your Stats</string>
+    <string name="for_you">For You</string>
+    <string name="trending">Trending</string>
+    <string name="categories">Categories</string>
+
+    <!-- User Engagement -->
+    <string name="enable_library_features">Enable Library Features</string>
+    <string name="library_consent_message">VibeTube can save your watch history and favorites to enhance your experience. This data is stored locally on your device and can be deleted at any time.</string>
+    <string name="data_retention_notice">Your data will be automatically deleted after 30 days of inactivity. You can delete all data immediately in Settings.</string>
+
+    <!-- Achievement System -->
+    <string name="achievement_unlocked">Achievement Unlocked!</string>
+    <string name="new_achievement">New Achievement</string>
+    <string name="achievement_progress">Achievement Progress</string>
+
+    <!-- Social Features -->
+    <string name="share_video">Share Video</string>
+    <string name="share_playlist">Share Playlist</string>
+    <string name="share_app">Share VibeTube</string>
+
+    <!-- Data Management -->
+    <string name="manage_data">Manage Your Data</string>
+    <string name="delete_all_data">Delete All Data</string>
+    <string name="data_deleted">All library data has been deleted</string>
+
+    <!-- Settings -->
+    <string name="privacy_data">Privacy &amp; Data</string>
+    <string name="help_feedback">Help &amp; Feedback</string>
+    <string name="about">About</string>
+
 </resources>

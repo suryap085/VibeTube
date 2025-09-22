@@ -28,6 +28,8 @@ import com.video.vibetube.network.createYouTubeService
 import com.video.vibetube.utils.NetworkMonitor
 import com.video.vibetube.utils.QuotaManager
 import com.video.vibetube.utils.SearchVideoCacheManager
+import com.video.vibetube.utils.SocialManager
+import com.video.vibetube.utils.UserDataManager
 import com.video.vibetube.utils.Utility.parseDuration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -49,6 +51,8 @@ abstract class BaseSearchFragment : Fragment() {
     protected lateinit var quotaManager: QuotaManager
     protected lateinit var networkMonitor: NetworkMonitor
     protected lateinit var cacheManager: SearchVideoCacheManager
+    protected lateinit var userDataManager: UserDataManager
+    protected lateinit var socialManager: SocialManager
 
     protected val searchResults = mutableListOf<Video>()
     protected var nextPageToken = ""
@@ -91,13 +95,18 @@ abstract class BaseSearchFragment : Fragment() {
         quotaManager = QuotaManager(requireContext())
         networkMonitor = NetworkMonitor(requireContext())
         cacheManager = SearchVideoCacheManager(requireContext())
+        userDataManager = UserDataManager.getInstance(requireContext())
+        socialManager = SocialManager.getInstance(requireContext())
     }
 
     private fun setupRecyclerView() {
         searchResultsAdapter = SearchResultsAdapter(
             videos = searchResults,
             onVideoClick = { video -> openVideoPlayer(video) },
-            onLoadMore = { loadMoreResults() }
+            onLoadMore = { loadMoreResults() },
+            lifecycleOwner = this,
+            userDataManager = userDataManager,
+            socialManager = socialManager
         )
 
         recyclerView.layoutManager = LinearLayoutManager(context)
@@ -150,11 +159,11 @@ abstract class BaseSearchFragment : Fragment() {
     protected fun loadMoreResults() {
         if (isLoading || nextPageToken.isEmpty() || currentQuery.isEmpty()) return
         if (!networkMonitor.isConnected()) {
-            Toast.makeText(requireContext(), "No Internet Connection", Toast.LENGTH_SHORT).show()
+            safeShowToast("No Internet Connection")
             return
         }
         if (quotaManager.isQuotaExceeded()) {
-            Toast.makeText(requireContext(), "API Quota Exceeded", Toast.LENGTH_SHORT).show()
+            safeShowToast("API Quota Exceeded")
             return
         }
 
@@ -260,5 +269,11 @@ abstract class BaseSearchFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         searchJob?.cancel()
+    }
+
+    protected fun safeShowToast(message: String) {
+        if (isAdded && context != null) {
+            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+        }
     }
 }

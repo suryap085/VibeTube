@@ -216,3 +216,199 @@ data class ChannelVideosSection(
     var isLoading: Boolean = false,
     var playlistId: String? = null
 )
+
+// User Engagement Data Models
+data class WatchHistoryItem(
+    val videoId: String,
+    val title: String,
+    val thumbnail: String,
+    val channelTitle: String,
+    val channelId: String,
+    val duration: String,
+    val watchedAt: Long = System.currentTimeMillis(),
+    val watchProgress: Float = 0.0f, // 0.0 to 1.0
+    val watchDuration: Long = 0L, // milliseconds watched
+    val isCompleted: Boolean = false
+) : Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readLong(),
+        parcel.readFloat(),
+        parcel.readLong(),
+        parcel.readByte() != 0.toByte()
+    )
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(videoId)
+        parcel.writeString(title)
+        parcel.writeString(thumbnail)
+        parcel.writeString(channelTitle)
+        parcel.writeString(channelId)
+        parcel.writeString(duration)
+        parcel.writeLong(watchedAt)
+        parcel.writeFloat(watchProgress)
+        parcel.writeLong(watchDuration)
+        parcel.writeByte(if (isCompleted) 1 else 0)
+    }
+
+    override fun describeContents(): Int = 0
+
+    companion object CREATOR : Parcelable.Creator<WatchHistoryItem> {
+        override fun createFromParcel(parcel: Parcel): WatchHistoryItem {
+            return WatchHistoryItem(parcel)
+        }
+        override fun newArray(size: Int): Array<WatchHistoryItem?> {
+            return arrayOfNulls(size)
+        }
+    }
+}
+
+data class FavoriteItem(
+    val videoId: String,
+    val title: String,
+    val thumbnail: String,
+    val channelTitle: String,
+    val channelId: String,
+    val duration: String,
+    val addedAt: Long = System.currentTimeMillis(),
+    val category: String = "default" // User-defined category
+) : Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readLong(),
+        parcel.readString() ?: "default"
+    )
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(videoId)
+        parcel.writeString(title)
+        parcel.writeString(thumbnail)
+        parcel.writeString(channelTitle)
+        parcel.writeString(channelId)
+        parcel.writeString(duration)
+        parcel.writeLong(addedAt)
+        parcel.writeString(category)
+    }
+
+    override fun describeContents(): Int = 0
+
+    companion object CREATOR : Parcelable.Creator<FavoriteItem> {
+        override fun createFromParcel(parcel: Parcel): FavoriteItem {
+            return FavoriteItem(parcel)
+        }
+        override fun newArray(size: Int): Array<FavoriteItem?> {
+            return arrayOfNulls(size)
+        }
+    }
+}
+
+data class FavoriteChannelItem(
+    val channelId: String,
+    val channelTitle: String,
+    val channelDescription: String,
+    val thumbnail: String,
+    val addedAt: Long = System.currentTimeMillis()
+) : Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readLong()
+    )
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(channelId)
+        parcel.writeString(channelTitle)
+        parcel.writeString(channelDescription)
+        parcel.writeString(thumbnail)
+        parcel.writeLong(addedAt)
+    }
+
+    override fun describeContents(): Int = 0
+
+    companion object CREATOR : Parcelable.Creator<FavoriteChannelItem> {
+        override fun createFromParcel(parcel: Parcel): FavoriteChannelItem {
+            return FavoriteChannelItem(parcel)
+        }
+        override fun newArray(size: Int): Array<FavoriteChannelItem?> {
+            return arrayOfNulls(size)
+        }
+    }
+}
+
+data class FavoritePlaylistItem(
+    val playlistId: String,
+    val playlistTitle: String,
+    val playlistDescription: String,
+    val thumbnail: String,
+    val channelTitle: String,
+    val channelId: String,
+    val addedAt: Long = System.currentTimeMillis()
+) : Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readLong()
+    )
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(playlistId)
+        parcel.writeString(playlistTitle)
+        parcel.writeString(playlistDescription)
+        parcel.writeString(thumbnail)
+        parcel.writeString(channelTitle)
+        parcel.writeString(channelId)
+        parcel.writeLong(addedAt)
+    }
+
+    override fun describeContents(): Int = 0
+
+    companion object CREATOR : Parcelable.Creator<FavoritePlaylistItem> {
+        override fun createFromParcel(parcel: Parcel): FavoritePlaylistItem {
+            return FavoritePlaylistItem(parcel)
+        }
+        override fun newArray(size: Int): Array<FavoritePlaylistItem?> {
+            return arrayOfNulls(size)
+        }
+    }
+}
+
+data class UserPlaylist(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val name: String,
+    val description: String = "",
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis(),
+    val videoIds: MutableList<String> = mutableListOf(), // Keep for backward compatibility
+    val videos: MutableList<Video> = mutableListOf(), // Store full video objects
+    val isPublic: Boolean = false,
+    val thumbnailUrl: String = ""
+)
+
+/**
+ * Data class representing a content category section
+ * YouTube Policy Compliance: Uses only predefined categories and channels
+ */
+data class CategorySection(
+    val id: String,
+    val name: String,
+    val description: String,
+    val iconRes: Int,
+    val colorRes: Int,
+    val channels: List<Pair<String, String>> = emptyList() // (channelId, channelName)
+)

@@ -33,7 +33,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class TrendingMoviesFragment : Fragment() {
+class MoviesFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var messageTextView: TextView
@@ -164,12 +164,12 @@ class TrendingMoviesFragment : Fragment() {
 
     private fun updateUIVisibility(customMessage: String? = null) {
         lifecycleScope.launch(Dispatchers.Main) {
-            if (this@TrendingMoviesFragment::swipeRefreshLayout.isInitialized && swipeRefreshLayout.isRefreshing) {
+            if (this@MoviesFragment::swipeRefreshLayout.isInitialized && swipeRefreshLayout.isRefreshing) {
                 swipeRefreshLayout.isRefreshing = false
             }
             val allFinishedLoading = channelSections.none { it.isLoading }
             if (allFinishedLoading) {
-                if (this@TrendingMoviesFragment::swipeRefreshLayout.isInitialized && swipeRefreshLayout.isRefreshing) {
+                if (this@MoviesFragment::swipeRefreshLayout.isInitialized && swipeRefreshLayout.isRefreshing) {
                     swipeRefreshLayout.isRefreshing = false
                 }
             }

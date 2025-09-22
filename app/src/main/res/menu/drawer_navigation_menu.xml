@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <!-- Library Section -->
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_watch_history"
+            android:icon="@drawable/ic_history"
+            android:title="Watch History" />
+        <item
+            android:id="@+id/nav_favorites"
+            android:icon="@drawable/ic_favorite"
+            android:title="Favorites" />
+        <item
+            android:id="@+id/nav_playlists"
+            android:icon="@drawable/ic_playlist_play"
+            android:title="My Playlists" />
+        <item
+            android:id="@+id/nav_downloads"
+            android:icon="@drawable/ic_download"
+            android:title="Offline Videos"
+            android:visible="false" />
+    </group>
+
+    <!-- Divider -->
+    <item android:title="Discover">
+        <menu>
+            <item
+                android:id="@+id/nav_recommendations"
+                android:icon="@drawable/ic_recommend"
+                android:title="For You" />
+            <item
+                android:id="@+id/nav_trending"
+                android:icon="@drawable/ic_trending_up"
+                android:title="Trending" />
+            <item
+                android:id="@+id/nav_categories"
+                android:icon="@drawable/ic_category"
+                android:title="Categories" />
+        </menu>
+    </item>
+
+    <!-- Divider -->
+    <item android:title="Engagement">
+        <menu>
+            <item
+                android:id="@+id/nav_achievements"
+                android:icon="@drawable/ic_achievement"
+                android:title="Achievements" />
+            <item
+                android:id="@+id/nav_share_app"
+                android:icon="@drawable/ic_share"
+                android:title="Share VibeTube" />
+        </menu>
+    </item>
+
+    <!-- Divider -->
+    <item android:title="Settings">
+        <menu>
+            <item
+                android:id="@+id/nav_settings"
+                android:icon="@drawable/ic_settings"
+                android:title="Settings" />
+            <item
+                android:id="@+id/nav_privacy"
+                android:icon="@drawable/ic_privacy"
+                android:title="Privacy &amp; Data" />
+            <item
+                android:id="@+id/nav_help"
+                android:icon="@drawable/ic_help"
+                android:title="Help &amp; Feedback" />
+            <item
+                android:id="@+id/nav_about"
+                android:icon="@drawable/ic_info"
+                android:title="About" />
+        </menu>
+    </item>
+
+</menu>

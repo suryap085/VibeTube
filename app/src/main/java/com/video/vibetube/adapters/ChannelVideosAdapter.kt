@@ -7,10 +7,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.ImageView
+import com.google.android.material.button.MaterialButton
 import android.widget.RatingBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.gms.ads.nativead.NativeAd
@@ -18,12 +24,20 @@ import com.google.android.gms.ads.nativead.NativeAdView
 import com.video.vibetube.R
 import com.video.vibetube.models.Video
 import com.video.vibetube.utils.AdManager
+import com.video.vibetube.utils.PlaylistManager
+import com.video.vibetube.utils.SocialManager
+import com.video.vibetube.utils.UserDataManager
 import com.video.vibetube.utils.Utility
+import kotlinx.coroutines.launch
 import java.time.OffsetDateTime
 
 class ChannelVideosAdapter(
     private val listItems: MutableList<Any>,
-    private val onVideoClick: (Video) -> Unit
+    private val onVideoClick: (Video) -> Unit,
+    private val lifecycleOwner: LifecycleOwner,
+    private val userDataManager: UserDataManager,
+    private val socialManager: SocialManager,
+    private val playlistManager: PlaylistManager
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     companion object {
         private const val VIDEO_VIEW_TYPE = 0
@@ -63,6 +77,9 @@ class ChannelVideosAdapter(
         private val descriptionTextView: TextView = itemView.findViewById(R.id.descriptionTextView)
         private val publishedTextView: TextView = itemView.findViewById(R.id.publishedTextView)
         private val durationTextView: TextView = itemView.findViewById(R.id.durationTextView)
+        private val favoriteButton: MaterialButton = itemView.findViewById(R.id.favoriteButton)
+        private val playlistButton: MaterialButton = itemView.findViewById(R.id.playlistButton)
+        private val shareButton: MaterialButton = itemView.findViewById(R.id.shareButton)
 
         @RequiresApi(Build.VERSION_CODES.O)
         @SuppressLint("DefaultLocale")
@@ -82,6 +99,149 @@ class ChannelVideosAdapter(
             }
             Glide.with(itemView).load(video.thumbnail).into(thumbnailImageView)
             itemView.setOnClickListener { onVideoClick(video) }
+
+            // Setup favorite button
+            setupFavoriteButton(video)
+
+            // Setup playlist button
+            setupPlaylistButton(video)
+
+            // Setup share button
+            setupShareButton(video)
+        }
+
+        /**
+         * Setup favorite button with YouTube Policy compliance
+         * - Only stores video metadata (not content)
+         * - User-initiated action only
+         * - Respects user consent
+         */
+        private fun setupFavoriteButton(video: Video) {
+            // Check current favorite status and update UI
+            lifecycleOwner.lifecycleScope.launch {
+                try {
+                    val isFavorite = userDataManager.isFavorite(video.videoId)
+                    updateFavoriteButtonState(isFavorite)
+                } catch (e: Exception) {
+                    Log.e("ChannelVideosAdapter", "Error checking favorite status", e)
+                }
+            }
+
+            // Set click listener for favorite toggle
+            favoriteButton.setOnClickListener {
+                lifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val currentlyFavorite = userDataManager.isFavorite(video.videoId)
+
+                        if (currentlyFavorite) {
+                            // Remove from favorites
+                            userDataManager.removeFromFavorites(video.videoId)
+                            updateFavoriteButtonState(false)
+                            showToast("Removed from favorites")
+                        } else {
+                            // Add to favorites with channel context
+                            val success = userDataManager.addToFavorites(video, sourceContext = "channel")
+                            if (success) {
+                                updateFavoriteButtonState(true)
+                                showToast("Added to favorites")
+                            } else {
+                                showToast("Library Features is not enabled or Already in favorites or limit reached")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("ChannelVideosAdapter", "Error toggling favorite", e)
+                        showToast("Failed to update favorites")
+                    }
+                }
+            }
+        }
+
+        /**
+         * Setup playlist button with YouTube Policy compliance
+         * - Only stores video metadata (not content)
+         * - User-initiated action only
+         * - Respects user consent
+         */
+        private fun setupPlaylistButton(video: Video) {
+            // Update button state based on whether video is in any playlist
+            lifecycleOwner.lifecycleScope.launch {
+                try {
+                    val isInPlaylist = playlistManager.isVideoInAnyPlaylist(video.videoId)
+                    playlistButton.setIconResource(
+                        if (isInPlaylist) R.drawable.ic_playlist_add_check else R.drawable.ic_playlist_add
+                    )
+                    playlistButton.setIconTintResource(
+                        if (isInPlaylist) R.color.primary else R.color.text_secondary
+                    )
+                } catch (e: Exception) {
+                    Log.e("ChannelVideosAdapter", "Error checking playlist status", e)
+                }
+            }
+
+            playlistButton.setOnClickListener {
+                try {
+                    playlistManager.showAddToPlaylistDialog(
+                        video = video,
+                        lifecycleOwner = lifecycleOwner,
+                        onSuccess = { addedPlaylists ->
+                            if (addedPlaylists.isNotEmpty()) {
+                                showToast("Added to ${addedPlaylists.joinToString(", ")}")
+                                // Update button state after successful addition
+                                setupPlaylistButton(video)
+                            }
+                        },
+                        onError = { error ->
+                            showToast("Failed to add to playlist: $error")
+                        }
+                    )
+                } catch (e: Exception) {
+                    Log.e("ChannelVideosAdapter", "Error adding to playlist", e)
+                    showToast("Failed to add to playlist")
+                }
+            }
+        }
+
+        /**
+         * Setup share button with YouTube Policy compliance
+         * - Shares YouTube video links only (not content)
+         * - Proper YouTube attribution
+         * - User-initiated sharing only
+         */
+        private fun setupShareButton(video: Video) {
+            shareButton.setOnClickListener {
+                try {
+                    // Use SocialManager for YouTube Policy compliant sharing
+                    socialManager.shareVideo(video.videoId, video.title)
+
+                    // Optional: Show confirmation
+                    showToast("Sharing video...")
+                } catch (e: Exception) {
+                    Log.e("ChannelVideosAdapter", "Error sharing video", e)
+                    showToast("Failed to share video")
+                }
+            }
+        }
+
+        /**
+         * Update favorite button visual state
+         */
+        private fun updateFavoriteButtonState(isFavorite: Boolean) {
+            if (isFavorite) {
+                favoriteButton.setIconResource(R.drawable.ic_favorite)
+                favoriteButton.setIconTintResource(R.color.primary)
+                favoriteButton.contentDescription = "Remove from favorites"
+            } else {
+                favoriteButton.setIconResource(R.drawable.ic_favorite_border)
+                favoriteButton.setIconTintResource(R.color.text_secondary)
+                favoriteButton.contentDescription = "Add to favorites"
+            }
+        }
+
+        /**
+         * Show toast message
+         */
+        private fun showToast(message: String) {
+            Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
         }
     }
 

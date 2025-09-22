@@ -50,6 +50,14 @@
             android:name=".activity.SearchActivity"
             android:exported="false"
             android:theme="@style/Theme.VibeTube"/>
+        <activity
+            android:name=".activity.LibraryActivity"
+            android:exported="false"
+            android:theme="@style/Theme.VibeTube"/>
+        <activity
+            android:name=".activity.PlaylistDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.VibeTube"/>
     </application>
 
 </manifest>

@@ -3,17 +3,22 @@ package com.video.vibetube.fragments
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -27,6 +32,7 @@ import com.video.vibetube.network.createYouTubeService
 import com.video.vibetube.utils.NetworkMonitor
 import com.video.vibetube.utils.QuotaManager
 import com.video.vibetube.utils.SearchChannelCacheManager
+import com.video.vibetube.utils.SocialManager
 import com.video.vibetube.utils.UploadsPlaylistCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -48,6 +54,7 @@ class SearchChannelsFragment : Fragment() {
     private lateinit var networkMonitor: NetworkMonitor
     private lateinit var cacheManager: SearchChannelCacheManager
     private lateinit var uploadsCache: UploadsPlaylistCache
+    private lateinit var socialManager: SocialManager
 
 
     private val channelResults = mutableListOf<YouTubeSearchItem>()
@@ -95,6 +102,7 @@ class SearchChannelsFragment : Fragment() {
         networkMonitor = NetworkMonitor(requireContext())
         cacheManager = SearchChannelCacheManager(requireContext())
         uploadsCache = UploadsPlaylistCache(requireContext())
+        socialManager = SocialManager.getInstance(requireContext())
     }
 
     private fun setupRecyclerView() {
@@ -107,7 +115,9 @@ class SearchChannelsFragment : Fragment() {
                 }
                 startActivity(intent)
             },
-            onLoadMore = { loadMoreResults() }
+            onLoadMore = { loadMoreResults() },
+            lifecycleOwner = this@SearchChannelsFragment,
+            socialManager = socialManager
         )
 
         recyclerView.layoutManager = LinearLayoutManager(context)
@@ -162,11 +172,11 @@ class SearchChannelsFragment : Fragment() {
             clearSearchResults()
         }
 
-        searchEditText.addTextChangedListener(object : android.text.TextWatcher {
+        searchEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
 
-            override fun afterTextChanged(s: android.text.Editable?) {
+            override fun afterTextChanged(s: Editable?) {
                 val query = s?.toString()?.trim() ?: ""
                 searchJob?.cancel()
 
@@ -293,7 +303,9 @@ class SearchChannelsFragment : Fragment() {
     private class ChannelsAdapter(
         private val channels: List<YouTubeSearchItem>,
         private val onChannelClick: (YouTubeSearchItem) -> Unit,
-        private val onLoadMore: () -> Unit
+        private val onLoadMore: () -> Unit,
+        private val lifecycleOwner: LifecycleOwner,
+        private val socialManager: SocialManager
     ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         companion object {
@@ -305,10 +317,11 @@ class SearchChannelsFragment : Fragment() {
             return if (position == channels.size) VIEW_TYPE_LOADING else VIEW_TYPE_VIDEO
         }
 
-        class ChannelViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        inner class ChannelViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
             val channelThumbnail: ImageView = itemView.findViewById(R.id.channelThumbnail)
             val channelTitle: TextView = itemView.findViewById(R.id.channelTitle)
             val channelDescription: TextView = itemView.findViewById(R.id.channelDescription)
+            private val shareButton: ImageButton = itemView.findViewById(R.id.shareButton)
 
             fun bind(channel: YouTubeSearchItem) {
                 // Load thumbnail
@@ -325,6 +338,33 @@ class SearchChannelsFragment : Fragment() {
                 channelTitle.text = channel.snippet.channelTitle
                 channelDescription.text = channel.snippet.description
 
+                // Setup share button
+                setupShareButton(channel)
+            }
+
+
+
+            /**
+             * Setup share button functionality
+             */
+            private fun setupShareButton(channel: YouTubeSearchItem) {
+                shareButton.setOnClickListener {
+                    try {
+                        socialManager.shareChannel(channel.snippet.channelId, channel.snippet.channelTitle)
+                    } catch (e: Exception) {
+                        Log.e("SearchChannelsAdapter", "Error sharing channel", e)
+                        showToast("Failed to share channel")
+                    }
+                }
+            }
+
+
+
+            /**
+             * Show toast message
+             */
+            private fun showToast(message: String) {
+                Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
             }
         }
 
