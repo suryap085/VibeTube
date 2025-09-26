@@ -62,10 +62,10 @@
 -keep public class * extends androidx.appcompat.app.AppCompatActivity
 
 # Keep custom cache classes
--keep class com.video.vibetube.fragments.YouTubeCompliantCacheManager { *; }
--keep class com.video.vibetube.fragments.QuotaManager { *; }
--keep class com.video.vibetube.fragments.NetworkMonitor { *; }
--keep class com.video.vibetube.fragments.QuotaStatus { *; }
+-keep class com.video.vibetube.utils.YouTubeCompliantCacheManager { *; }
+-keep class com.video.vibetube.utils.QuotaManager { *; }
+-keep class com.video.vibetube.utils.NetworkMonitor { *; }
+-keep class com.video.vibetube.models.QuotaStatus { *; }
 
 # Remove logging in release builds
 -assumenosideeffects class android.util.Log {
@@ -80,3 +80,22 @@
 # Keep line numbers for crash reports
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
+
+# Keep all model classes used with Firestore
+-keep class com.video.vibetube.models.** { *; }
+-keep class com.video.vibetube.sync.CrossDeviceSyncManager$** { *; }
+
+# Keep constructors for Firestore serialization
+-keepclassmembers class com.video.vibetube.models.** {
+    <init>();
+    <init>(...);
+}
+
+# Keep Firebase/Firestore classes
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
+
+# Keep Gson classes (if using Gson)
+-keep class com.google.gson.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*

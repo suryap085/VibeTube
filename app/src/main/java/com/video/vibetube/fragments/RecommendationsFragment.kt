@@ -22,6 +22,7 @@ import com.video.vibetube.utils.UserDataManager
 import com.video.vibetube.utils.EngagementAnalytics
 import com.video.vibetube.utils.NetworkMonitor
 import com.video.vibetube.utils.SearchVideoCacheManager
+import com.video.vibetube.integration.VibeTubeEnhancementIntegrator
 import kotlinx.coroutines.launch
 
 /**
@@ -54,6 +55,7 @@ class RecommendationsFragment : Fragment() {
     private lateinit var networkMonitor: NetworkMonitor
     private lateinit var cacheManager: SearchVideoCacheManager
     private lateinit var recommendedVideosAdapter: RecommendedVideosAdapter
+    private lateinit var enhancementIntegrator: VibeTubeEnhancementIntegrator
     
     private lateinit var recyclerView: RecyclerView
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
@@ -101,6 +103,7 @@ class RecommendationsFragment : Fragment() {
         engagementAnalytics = EngagementAnalytics.getInstance(requireContext())
         networkMonitor = NetworkMonitor(requireContext())
         cacheManager = SearchVideoCacheManager(requireContext())
+        enhancementIntegrator = VibeTubeEnhancementIntegrator.getInstance(requireContext())
     }
 
     private fun initializeViews(view: View) {
@@ -195,14 +198,18 @@ class RecommendationsFragment : Fragment() {
                     return@launch
                 }
                 
-                // Generate recommendations using local data only
-                val recommendations = generateLocalRecommendations()
-                
+                // Generate enhanced recommendations using ML and contextual discovery
+                val recommendations = generateEnhancedRecommendations()
+
+                Log.d(TAG, "Generated ${recommendations.size} recommendations")
+
                 if (recommendations.isEmpty()) {
+                    Log.d(TAG, "No recommendations generated, showing insufficient data message")
                     showInsufficientData()
                 } else {
+                    Log.d(TAG, "Showing ${recommendations.size} recommendations")
                     showRecommendations(recommendations)
-                    engagementAnalytics.trackFeatureUsage("recommendations_loaded")
+                    engagementAnalytics.trackFeatureUsage("enhanced_recommendations_loaded")
                 }
                 
             } catch (e: Exception) {
@@ -559,13 +566,24 @@ class RecommendationsFragment : Fragment() {
     }
 
     private fun showRecommendations(recommendations: List<Video>) {
-        recommendedVideos.clear()
-        recommendedVideos.addAll(recommendations)
-        recommendedVideosAdapter.notifyDataSetChanged()
-        
+        Log.d(TAG, "Showing ${recommendations.size} recommendations")
+
+        // Update UI state first
         recyclerView.visibility = View.VISIBLE
         emptyStateLayout.visibility = View.GONE
         loadingStateLayout.visibility = View.GONE
+
+        recommendedVideos.clear()
+        recommendedVideos.addAll(recommendations)
+        // Use updateVideos method to properly handle ads insertion
+        recommendedVideosAdapter.updateVideos(recommendations)
+
+        // Ensure UI state is correct
+        if (recommendations.isEmpty()) {
+            recyclerView.visibility = View.GONE
+            emptyStateLayout.visibility = View.VISIBLE
+            showMessage("No recommendations available")
+        }
     }
 
     private fun showMessage(message: String) {
@@ -581,5 +599,39 @@ class RecommendationsFragment : Fragment() {
     private fun showEnableRecommendationsDialog() {
         // Navigate to Library Settings to enable features
         Toast.makeText(requireContext(), "Go to Library → Settings to enable recommendations", Toast.LENGTH_LONG).show()
+    }
+
+    /**
+     * Generate enhanced recommendations using ML and contextual discovery
+     */
+    private suspend fun generateEnhancedRecommendations(): List<Video> {
+        return try {
+            // Use enhanced recommendation system
+            val contextualRecs = enhancementIntegrator.getEnhancedRecommendations(30)
+
+            // Convert contextual recommendations to Video objects
+            val enhancedVideos = contextualRecs.map { rec ->
+                Video(
+                    videoId = rec.video.videoId,
+                    title = "${rec.video.title} • ${rec.reasons.firstOrNull() ?: "Recommended"}",
+                    description = "${rec.video.description}\n\n💡 Why recommended: ${rec.reasons.joinToString(", ")}",
+                    thumbnail = rec.video.thumbnail,
+                    channelTitle = rec.video.channelTitle,
+                    publishedAt = rec.video.publishedAt,
+                    duration = rec.video.duration
+                )
+            }
+
+            // If enhanced recommendations are empty, fall back to local recommendations
+            if (enhancedVideos.isEmpty()) {
+                generateLocalRecommendations()
+            } else {
+                enhancedVideos
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error generating enhanced recommendations, falling back to local", e)
+            generateLocalRecommendations()
+        }
     }
 }

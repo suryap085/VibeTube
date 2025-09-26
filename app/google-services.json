@@ -12,7 +12,20 @@
           "package_name": "com.video.vibetube"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "436254934364-j2udctu6ak2m4ovdrj67pr9224s9hpg0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.video.vibetube",
+            "certificate_hash": "74e14a76c85bd5a4de75e3e4b5247a2c71003783"
+          }
+        },
+        {
+          "client_id": "436254934364-ef01gp6754ak2b1o71q85bssc215phdb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDhUAtmedpYZsfU_vYLrEzs4cBXixd4jW8"
@@ -20,9 +33,15 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "436254934364-ef01gp6754ak2b1o71q85bssc215phdb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
-      }
+      },
+      "admob_app_id": "ca-app-pub-8519418185028322~8666350040"
     }
   ],
   "configuration_version": "1"

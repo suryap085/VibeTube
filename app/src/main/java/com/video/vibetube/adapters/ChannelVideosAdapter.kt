@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdView
+import com.google.android.gms.ads.rewarded.RewardedAd
 import com.video.vibetube.R
 import com.video.vibetube.models.Video
 import com.video.vibetube.utils.AdManager
@@ -41,12 +42,12 @@ class ChannelVideosAdapter(
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     companion object {
         private const val VIDEO_VIEW_TYPE = 0
-        private const val AD_VIEW_TYPE = 1
+        private const val REWARDED_AD_VIEW_TYPE = 1
         const val AD_FREQUENCY = 6
     }
 
     override fun getItemViewType(position: Int): Int {
-        return if (listItems[position] is Video) VIDEO_VIEW_TYPE else AD_VIEW_TYPE
+        return if (listItems[position] is Video) VIDEO_VIEW_TYPE else REWARDED_AD_VIEW_TYPE
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -54,8 +55,8 @@ class ChannelVideosAdapter(
             val view = LayoutInflater.from(parent.context).inflate(R.layout.item_video, parent, false)
             VideoViewHolder(view)
         } else {
-            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_native_ad, parent, false)
-            AdViewHolder(view)
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_rewarded_ad, parent, false)
+            RewardedAdViewHolder(view)
         }
     }
 
@@ -64,7 +65,7 @@ class ChannelVideosAdapter(
         if (getItemViewType(position) == VIDEO_VIEW_TYPE) {
             (holder as VideoViewHolder).bind(listItems[position] as Video)
         } else {
-            (holder as AdViewHolder).bind()
+            (holder as RewardedAdViewHolder).bind()
         }
     }
 
@@ -245,108 +246,130 @@ class ChannelVideosAdapter(
         }
     }
 
-    inner class AdViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val adView: NativeAdView = itemView.findViewById(R.id.native_ad_view)
+    inner class RewardedAdViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val watchAdButton: MaterialButton = itemView.findViewById(R.id.watchAdButton)
+        private val skipAdButton: MaterialButton = itemView.findViewById(R.id.skipAdButton)
+        private val loadingLayout: View = itemView.findViewById(R.id.loadingLayout)
+        private val errorLayout: View = itemView.findViewById(R.id.errorLayout)
+        private val errorTextView: TextView = itemView.findViewById(R.id.errorTextView)
+
+        private var rewardedAd: RewardedAd? = null
+        private val adManager = AdManager(itemView.context)
 
         fun bind() {
-            val adManager = AdManager(itemView.context)
-            adManager.loadNativeAd(
-                onSuccess = { nativeAd ->
-                    // We are executing on the main thread, no need to post.
-                    populateNativeAdView(nativeAd, adView)
-                    itemView.visibility = View.VISIBLE
-                    val params = itemView.layoutParams
-                    params.height = ViewGroup.LayoutParams.WRAP_CONTENT
-                    itemView.layoutParams = params
+            Log.d("ChannelVideosAdapter", "RewardedAdViewHolder bind() called at position: $adapterPosition")
+
+            // Reset UI state
+            showDefaultState()
+
+            // Set up click listeners
+            setupClickListeners()
+
+            // Pre-load rewarded ad
+            loadRewardedAd()
+        }
+
+        private fun showDefaultState() {
+            watchAdButton.visibility = View.VISIBLE
+            skipAdButton.visibility = View.VISIBLE
+            loadingLayout.visibility = View.GONE
+            errorLayout.visibility = View.GONE
+            watchAdButton.isEnabled = false // Disabled until ad loads
+        }
+
+        private fun showLoadingState() {
+            watchAdButton.visibility = View.GONE
+            skipAdButton.visibility = View.VISIBLE
+            loadingLayout.visibility = View.VISIBLE
+            errorLayout.visibility = View.GONE
+        }
+
+        private fun showErrorState(message: String) {
+            watchAdButton.visibility = View.GONE
+            skipAdButton.visibility = View.VISIBLE
+            loadingLayout.visibility = View.GONE
+            errorLayout.visibility = View.VISIBLE
+            errorTextView.text = message
+        }
+
+        private fun showReadyState() {
+            watchAdButton.visibility = View.VISIBLE
+            skipAdButton.visibility = View.VISIBLE
+            loadingLayout.visibility = View.GONE
+            errorLayout.visibility = View.GONE
+            watchAdButton.isEnabled = true
+        }
+
+        private fun setupClickListeners() {
+            watchAdButton.setOnClickListener {
+                rewardedAd?.let { ad ->
+                    showRewardedAd(ad)
+                } ?: run {
+                    Log.w("ChannelVideosAdapter", "Rewarded ad not ready")
+                    showErrorState("Ad not ready, please try again")
+                }
+            }
+
+            skipAdButton.setOnClickListener {
+                Log.d("ChannelVideosAdapter", "User skipped rewarded ad")
+                // Hide the ad item gracefully
+                hideAdItem()
+            }
+        }
+
+        private fun loadRewardedAd() {
+            showLoadingState()
+
+            adManager.loadRewardedAd(
+                onSuccess = { ad ->
+                    Log.d("ChannelVideosAdapter", "Rewarded ad loaded successfully at position: $adapterPosition")
+                    rewardedAd = ad
+                    showReadyState()
                 },
-                onFailure = { loadAdError ->
-                    // This is the fix for the blank space!
-                    Log.e("ChannelVideosAdapter", "Native ad failed to load: ${loadAdError.message}")
-                    // Hide the view completely on failure.
-                    itemView.visibility = View.GONE
-                    val params = itemView.layoutParams
-                    params.height = 0
-                    itemView.layoutParams = params
+                onFailure = { error ->
+                    Log.w("ChannelVideosAdapter", "Rewarded ad failed to load at position $adapterPosition: ${error.message}")
+                    showErrorState("Ad not available")
+                },
+                contentContext = AdManager.YOUTUBE_CONTENT_CONTEXT
+            )
+        }
+
+        private fun showRewardedAd(ad: RewardedAd) {
+            adManager.showRewardedAd(
+                rewardedAd = ad,
+                onRewardEarned = {
+                    Log.d("ChannelVideosAdapter", "User earned reward from ad at position: $adapterPosition")
+                    // Show success message or update UI
+                    showSuccessMessage()
+                    // Load next ad for future use
+                    loadRewardedAd()
+                },
+                onAdClosed = {
+                    Log.d("ChannelVideosAdapter", "Rewarded ad closed at position: $adapterPosition")
+                    // Optionally hide the ad item after viewing
+                    hideAdItem()
                 }
             )
         }
 
-        private fun populateNativeAdView(nativeAd: NativeAd, adView: NativeAdView) {
-            // Set the media view.
-            adView.mediaView = adView.findViewById(R.id.ad_media)
+        private fun showSuccessMessage() {
+            // Temporarily show success state
+            watchAdButton.text = "✓ Reward Earned!"
+            watchAdButton.isEnabled = false
 
-            // Set other assets.
-            adView.headlineView = adView.findViewById(R.id.ad_headline)
-            adView.bodyView = adView.findViewById(R.id.ad_body)
-            adView.callToActionView = adView.findViewById(R.id.ad_call_to_action)
-            adView.iconView = adView.findViewById(R.id.ad_app_icon)
-            adView.priceView = adView.findViewById(R.id.ad_price)
-            adView.starRatingView = adView.findViewById(R.id.ad_stars)
-            adView.storeView = adView.findViewById(R.id.ad_store)
-            adView.advertiserView = adView.findViewById(R.id.ad_advertiser)
-
-            // The headline and media content are guaranteed to be in every NativeAd.
-            (adView.headlineView as TextView).text = nativeAd.headline
-            adView.mediaView?.mediaContent = nativeAd.mediaContent
-
-            // These assets aren't guaranteed to be in every NativeAd, so it's important to
-            // check before trying to display them.
-            nativeAd.body?.let {
-                (adView.bodyView as TextView).text = it
-                adView.bodyView?.visibility = View.VISIBLE
-            } ?: run {
-                adView.bodyView?.visibility = View.GONE
-            }
-
-            nativeAd.callToAction?.let {
-                (adView.callToActionView as Button).text = it
-                adView.callToActionView?.visibility = View.VISIBLE
-            } ?: run {
-                adView.callToActionView?.visibility = View.GONE
-            }
-
-            nativeAd.icon?.let {
-                (adView.iconView as ImageView).setImageDrawable(it.drawable)
-                adView.iconView?.visibility = View.VISIBLE
-            } ?: run {
-                adView.iconView?.visibility = View.GONE
-            }
-
-            nativeAd.price?.let {
-                (adView.priceView as TextView).text = it
-                adView.priceView?.visibility = View.VISIBLE
-            } ?: run {
-                adView.priceView?.visibility = View.GONE
-            }
-
-            nativeAd.store?.let {
-                (adView.storeView as TextView).text = it
-                adView.storeView?.visibility = View.VISIBLE
-            } ?: run {
-                adView.storeView?.visibility = View.GONE
-            }
-
-            nativeAd.starRating?.let { rating ->
-                if (rating > 0) {
-                    (adView.starRatingView as RatingBar).rating = rating.toFloat()
-                    adView.starRatingView?.visibility = View.VISIBLE
-                } else {
-                    adView.starRatingView?.visibility = View.GONE
-                }
-            } ?: run {
-                adView.starRatingView?.visibility = View.GONE
-            }
-
-            nativeAd.advertiser?.let {
-                (adView.advertiserView as TextView).text = it
-                adView.advertiserView?.visibility = View.VISIBLE
-            } ?: run {
-                adView.advertiserView?.visibility = View.GONE
-            }
-
-            // This method tells the Google Mobile Ads SDK that you have finished populating your
-            // native ad view with this native ad.
-            adView.setNativeAd(nativeAd)
+            // Reset after delay
+            itemView.postDelayed({
+                hideAdItem()
+            }, 2000)
         }
+
+        private fun hideAdItem() {
+            itemView.visibility = View.GONE
+            val params = itemView.layoutParams
+            params.height = 0
+            itemView.layoutParams = params
+        }
+
+
     }
 }

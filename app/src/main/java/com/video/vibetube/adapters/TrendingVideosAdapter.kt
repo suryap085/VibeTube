@@ -17,12 +17,16 @@ import com.video.vibetube.R
 import com.video.vibetube.models.Video
 import com.video.vibetube.utils.UserDataManager
 import com.video.vibetube.utils.Utility
+import com.video.vibetube.utils.AdManager
+import com.google.android.gms.ads.nativead.NativeAd
+import com.google.android.gms.ads.nativead.NativeAdView
+import com.google.android.gms.ads.rewarded.RewardedAd
 import kotlinx.coroutines.launch
 import java.time.OffsetDateTime
 
 /**
  * YouTube Policy Compliant Trending Videos Adapter
- * 
+ *
  * This adapter displays trending videos while ensuring compliance
  * with YouTube's terms of service:
  * - Only displays videos from predefined channels
@@ -35,27 +39,71 @@ class TrendingVideosAdapter(
     private val onVideoClick: (Video) -> Unit,
     private val lifecycleOwner: LifecycleOwner,
     private val userDataManager: UserDataManager
-) : RecyclerView.Adapter<TrendingVideosAdapter.TrendingVideoViewHolder>() {
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TrendingVideoViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_trending_video, parent, false)
-        return TrendingVideoViewHolder(view)
+    private val listItems = mutableListOf<Any>()
+
+    companion object {
+        private const val VIEW_TYPE_VIDEO = 0
+        private const val VIEW_TYPE_REWARDED_AD = 1
+        private const val AD_FREQUENCY = 8 // Show ad every 8 trending videos
     }
 
-    override fun onBindViewHolder(holder: TrendingVideoViewHolder, position: Int) {
-        holder.bind(videos[position], position + 1)
+    override fun getItemViewType(position: Int): Int {
+        return if (listItems[position] is Video) VIEW_TYPE_VIDEO else VIEW_TYPE_REWARDED_AD
     }
 
-    override fun getItemCount(): Int = videos.size
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return when (viewType) {
+            VIEW_TYPE_REWARDED_AD -> {
+                val view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.item_rewarded_ad, parent, false)
+                RewardedAdViewHolder(view)
+            }
+            else -> {
+                val view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.item_trending_video, parent, false)
+                TrendingVideoViewHolder(view)
+            }
+        }
+    }
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (holder) {
+            is TrendingVideoViewHolder -> {
+                val video = listItems[position] as Video
+                val rank = videos.indexOf(video) + 1
+                holder.bind(video, rank)
+            }
+            is RewardedAdViewHolder -> holder.bind()
+        }
+    }
+
+    override fun getItemCount(): Int = listItems.size
 
     /**
-     * Update videos list and notify adapter
+     * Update videos list with ads and notify adapter
      */
     fun updateVideos(newVideos: List<Video>) {
         videos.clear()
         videos.addAll(newVideos)
+        updateListWithAds()
         notifyDataSetChanged()
+    }
+
+    /**
+     * Update list items with ads interspersed
+     */
+    private fun updateListWithAds() {
+        listItems.clear()
+        var adCounter = 0
+        videos.forEach { video ->
+            listItems.add(video)
+            adCounter++
+            if (adCounter % AD_FREQUENCY == 0) {
+                listItems.add(Any()) // Ad placeholder
+            }
+        }
     }
 
     inner class TrendingVideoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -205,6 +253,128 @@ class TrendingVideosAdapter(
          */
         private fun showToast(message: String) {
             Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * RewardedAdViewHolder for rewarded ads in trending videos
+     */
+    inner class RewardedAdViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val watchAdButton: MaterialButton = itemView.findViewById(R.id.watchAdButton)
+        private val skipAdButton: MaterialButton = itemView.findViewById(R.id.skipAdButton)
+        private val loadingLayout: View = itemView.findViewById(R.id.loadingLayout)
+        private val errorLayout: View = itemView.findViewById(R.id.errorLayout)
+        private val errorTextView: TextView = itemView.findViewById(R.id.errorTextView)
+
+        private var rewardedAd: RewardedAd? = null
+        private val adManager = AdManager(itemView.context)
+
+        fun bind() {
+            android.util.Log.d("TrendingVideosAdapter", "RewardedAdViewHolder bind() called at position: $adapterPosition")
+
+            // Reset UI state
+            showDefaultState()
+
+            // Set up click listeners
+            setupClickListeners()
+
+            // Pre-load rewarded ad
+            loadRewardedAd()
+        }
+
+        private fun showDefaultState() {
+            watchAdButton.visibility = View.VISIBLE
+            skipAdButton.visibility = View.VISIBLE
+            loadingLayout.visibility = View.GONE
+            errorLayout.visibility = View.GONE
+            watchAdButton.isEnabled = false // Disabled until ad loads
+        }
+
+        private fun showLoadingState() {
+            watchAdButton.visibility = View.GONE
+            skipAdButton.visibility = View.VISIBLE
+            loadingLayout.visibility = View.VISIBLE
+            errorLayout.visibility = View.GONE
+        }
+
+        private fun showErrorState(message: String) {
+            watchAdButton.visibility = View.GONE
+            skipAdButton.visibility = View.VISIBLE
+            loadingLayout.visibility = View.GONE
+            errorLayout.visibility = View.VISIBLE
+            errorTextView.text = message
+        }
+
+        private fun showReadyState() {
+            watchAdButton.visibility = View.VISIBLE
+            skipAdButton.visibility = View.VISIBLE
+            loadingLayout.visibility = View.GONE
+            errorLayout.visibility = View.GONE
+            watchAdButton.isEnabled = true
+        }
+
+        private fun setupClickListeners() {
+            watchAdButton.setOnClickListener {
+                rewardedAd?.let { ad ->
+                    showRewardedAd(ad)
+                } ?: run {
+                    android.util.Log.w("TrendingVideosAdapter", "Rewarded ad not ready")
+                    showErrorState("Ad not ready, please try again")
+                }
+            }
+
+            skipAdButton.setOnClickListener {
+                android.util.Log.d("TrendingVideosAdapter", "User skipped rewarded ad")
+                hideAdItem()
+            }
+        }
+
+        private fun loadRewardedAd() {
+            showLoadingState()
+
+            adManager.loadRewardedAd(
+                onSuccess = { ad ->
+                    android.util.Log.d("TrendingVideosAdapter", "Rewarded ad loaded successfully at position: $adapterPosition")
+                    rewardedAd = ad
+                    showReadyState()
+                },
+                onFailure = { error ->
+                    android.util.Log.w("TrendingVideosAdapter", "Rewarded ad failed to load at position $adapterPosition: ${error.message}")
+                    showErrorState("Ad not available")
+                },
+                contentContext = AdManager.NON_YOUTUBE_CONTEXT
+            )
+        }
+
+        private fun showRewardedAd(ad: RewardedAd) {
+            adManager.showRewardedAd(
+                rewardedAd = ad,
+                onRewardEarned = {
+                    android.util.Log.d("TrendingVideosAdapter", "User earned reward from ad at position: $adapterPosition")
+                    showSuccessMessage()
+                    loadRewardedAd()
+                },
+                onAdClosed = {
+                    android.util.Log.d("TrendingVideosAdapter", "Rewarded ad closed at position: $adapterPosition")
+                    hideAdItem()
+                }
+            )
+        }
+
+        private fun showSuccessMessage() {
+            watchAdButton.text = "✓ Reward Earned!"
+            watchAdButton.isEnabled = false
+
+            itemView.postDelayed({
+                hideAdItem()
+            }, 2000)
+        }
+
+        private fun hideAdItem() {
+            itemView.visibility = View.GONE
+            val params = itemView.layoutParams
+            params.height = 0
+            itemView.layoutParams = params
         }
     }
 }

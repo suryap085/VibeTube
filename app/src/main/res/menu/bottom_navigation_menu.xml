@@ -21,8 +21,8 @@
         android:icon="@drawable/ic_movie"
         android:title="Movies" />
     <item
-        android:id="@+id/nav_diy"
+        android:id="@+id/nav_more"
         android:enabled="true"
-        android:icon="@drawable/ic_diy"
-        android:title="DIY" />
+        android:icon="@drawable/ic_more_vert"
+        android:title="More" />
 </menu>

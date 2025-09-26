@@ -37,8 +37,7 @@
         android:scaleType="centerCrop"
         android:src="@drawable/ic_account_circle"
         app:shapeAppearanceOverlay="@style/CircularImageView"
-        app:strokeColor="@color/white"
-        app:strokeWidth="2dp" />
+        />
 
     <!-- User Name -->
     <TextView

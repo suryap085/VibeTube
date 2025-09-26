@@ -22,6 +22,7 @@ import com.video.vibetube.models.UserPlaylist
 import com.video.vibetube.utils.UserDataManager
 import com.video.vibetube.utils.EngagementAnalytics
 import com.video.vibetube.utils.SocialManager
+import com.video.vibetube.integration.VibeTubeEnhancementIntegrator
 import kotlinx.coroutines.launch
 
 class PlaylistsFragment : Fragment() {
@@ -30,6 +31,7 @@ class PlaylistsFragment : Fragment() {
     private lateinit var engagementAnalytics: EngagementAnalytics
     private lateinit var socialManager: SocialManager
     private lateinit var playlistAdapter: PlaylistAdapter
+    private lateinit var enhancementIntegrator: VibeTubeEnhancementIntegrator
     
     private lateinit var playlistsRecyclerView: RecyclerView
     private lateinit var emptyStateLayout: View
@@ -68,6 +70,7 @@ class PlaylistsFragment : Fragment() {
         userDataManager = UserDataManager.getInstance(requireContext())
         engagementAnalytics = EngagementAnalytics.getInstance(requireContext())
         socialManager = SocialManager.getInstance(requireContext())
+        enhancementIntegrator = VibeTubeEnhancementIntegrator.getInstance(requireContext())
     }
 
     private fun initializeViews(view: View) {
@@ -117,6 +120,12 @@ class PlaylistsFragment : Fragment() {
 
         createFirstPlaylistButton.setOnClickListener {
             showCreatePlaylistDialog()
+        }
+
+        // Add long click for smart playlist generation
+        createPlaylistFab.setOnLongClickListener {
+            generateSmartPlaylists()
+            true
         }
     }
 
@@ -363,6 +372,74 @@ class PlaylistsFragment : Fragment() {
 
         loadingStateLayout.visibility = View.GONE
         Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+    }
+
+    /**
+     * Generate smart playlists using ML and content analysis
+     */
+    private fun generateSmartPlaylists() {
+        lifecycleScope.launch {
+            try {
+                Toast.makeText(requireContext(), "🤖 Generating smart playlists...", Toast.LENGTH_SHORT).show()
+
+                val smartPlaylists = enhancementIntegrator.generateEnhancedPlaylists()
+
+                if (smartPlaylists.isNotEmpty()) {
+                    // Actually save the smart playlists to user data
+                    var savedCount = 0
+                    smartPlaylists.forEach { smartPlaylist ->
+                        try {
+                            // Create playlist using UserDataManager
+                            val createdPlaylist = userDataManager.createPlaylist(
+                                name = smartPlaylist.name,
+                                description = smartPlaylist.description
+                            )
+
+                            // Add videos to the playlist
+                            smartPlaylist.videos.forEach { video ->
+                                userDataManager.addVideoToPlaylist(createdPlaylist.id, video)
+                            }
+
+                            savedCount++
+
+                        } catch (e: Exception) {
+                            // Continue with other playlists if one fails
+                            // Log error but don't break the loop
+                        }
+                    }
+
+                    val message = buildString {
+                        appendLine("🎯 Successfully created $savedCount smart playlists:")
+                        smartPlaylists.take(5).forEach { playlist ->
+                            appendLine("• ${playlist.name} (${playlist.videos.size} videos)")
+                        }
+                        if (smartPlaylists.size > 5) {
+                            appendLine("... and ${smartPlaylists.size - 5} more!")
+                        }
+                        appendLine()
+                        appendLine("These playlists will automatically update based on your viewing patterns.")
+                    }
+
+                    MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("🤖 Smart Playlists Created")
+                        .setMessage(message)
+                        .setPositiveButton("Great!") { dialog, _ ->
+                            dialog.dismiss()
+                            loadPlaylists() // Refresh the list to show new playlists
+                        }
+                        .show()
+
+                    // Track the feature usage
+                    engagementAnalytics.trackFeatureUsage("smart_playlists_generated")
+
+                } else {
+                    Toast.makeText(requireContext(), "No smart playlists could be generated. Watch more videos to improve recommendations!", Toast.LENGTH_LONG).show()
+                }
+
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Smart playlist generation failed: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     companion object {

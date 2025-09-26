@@ -6,6 +6,7 @@
     <color name="secondary">#EC4899</color> <!-- Vibrant pink for modern appeal -->
     <color name="secondary_variant">#DB2777</color> <!-- Deeper pink variant -->
     <color name="tertiary">#8B5CF6</color> <!-- Modern purple for accents -->
+    <color name="accent">#EC4899</color> <!-- Accent color for sync UI -->
 
     <!-- Background colors -->
     <color name="background_primary">#0F0F0F</color>
@@ -30,6 +31,7 @@
 
     <!-- Additional colors for search -->
     <color name="background_secondary">#1A1A1A</color>
+    <color name="background_tertiary">#2D2D2D</color>
     <color name="text_primary">#FFFFFF</color>
     <color name="text_secondary">#B3B3B3</color>
     <color name="text_tertiary">#808080</color>
@@ -95,6 +97,7 @@
     <!-- Status colors - Enhanced for better visibility -->
     <color name="success">#10B981</color> <!-- Modern emerald -->
     <color name="error">#EF4444</color> <!-- Modern red -->
+    <color name="error_background">#2D1B1B</color> <!-- Dark red background -->
     <color name="warning">#F59E0B</color> <!-- Modern amber -->
 
     <!-- Surface colors -->

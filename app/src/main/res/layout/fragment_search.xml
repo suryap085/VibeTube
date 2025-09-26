@@ -31,6 +31,7 @@
                 android:hint="@string/search_videos"
                 android:inputType="text"
                 android:maxLines="1"
+                android:imeOptions="actionSearch"
                 android:paddingStart="16dp"
                 android:paddingEnd="48dp"
                 android:textColor="@color/text_primary"

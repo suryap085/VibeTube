@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material Design 3 Design Tokens -->
+    
+    <!-- Spacing System (8dp grid) -->
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_sm">8dp</dimen>
+    <dimen name="spacing_md">16dp</dimen>
+    <dimen name="spacing_lg">24dp</dimen>
+    <dimen name="spacing_xl">32dp</dimen>
+    <dimen name="spacing_xxl">48dp</dimen>
+    
+    <!-- Corner Radius System -->
+    <dimen name="corner_radius_xs">4dp</dimen>
+    <dimen name="corner_radius_sm">8dp</dimen>
+    <dimen name="corner_radius_md">12dp</dimen>
+    <dimen name="corner_radius_lg">16dp</dimen>
+    <dimen name="corner_radius_xl">24dp</dimen>
+    
+    <!-- Elevation System -->
+    <dimen name="elevation_none">0dp</dimen>
+    <dimen name="elevation_sm">2dp</dimen>
+    <dimen name="elevation_md">4dp</dimen>
+    <dimen name="elevation_lg">8dp</dimen>
+    <dimen name="elevation_xl">12dp</dimen>
+    
+    <!-- Component Specific -->
+    <dimen name="card_corner_radius">@dimen/corner_radius_md</dimen>
+    <dimen name="card_elevation">@dimen/elevation_sm</dimen>
+    <dimen name="fab_elevation">@dimen/elevation_lg</dimen>
+    <dimen name="bottom_sheet_corner_radius">@dimen/corner_radius_lg</dimen>
+    
+    <!-- Video Card Dimensions -->
+    <dimen name="video_card_height">200dp</dimen>
+    <dimen name="video_card_padding">@dimen/spacing_md</dimen>
+
+    <!-- Achievement Card Dimensions -->
+    <dimen name="achievement_icon_size">48dp</dimen>
+    <dimen name="achievement_progress_height">4dp</dimen>
+    
+    <!-- Playlist Card Dimensions -->
+    <dimen name="playlist_card_height">160dp</dimen>
+    <dimen name="playlist_thumbnail_size">80dp</dimen>
+    
+    <!-- Typography Scale -->
+    <dimen name="text_size_xs">10sp</dimen>
+    <dimen name="text_size_sm">12sp</dimen>
+    <dimen name="text_size_md">14sp</dimen>
+    <dimen name="text_size_lg">16sp</dimen>
+    <dimen name="text_size_xl">18sp</dimen>
+    <dimen name="text_size_xxl">20sp</dimen>
+    <dimen name="text_size_display">24sp</dimen>
+    
+    <!-- Line Heights -->
+    <dimen name="line_height_sm">16sp</dimen>
+    <dimen name="line_height_md">20sp</dimen>
+    <dimen name="line_height_lg">24sp</dimen>
+    <dimen name="line_height_xl">28sp</dimen>
+    
+    <!-- Icon Sizes -->
+    <dimen name="icon_size_xs">16dp</dimen>
+    <dimen name="icon_size_sm">20dp</dimen>
+    <dimen name="icon_size_md">24dp</dimen>
+    <dimen name="icon_size_lg">32dp</dimen>
+    <dimen name="icon_size_xl">48dp</dimen>
+    
+    <!-- Touch Targets -->
+    <dimen name="touch_target_min">48dp</dimen>
+    <dimen name="touch_target_comfortable">56dp</dimen>
+    
+    <!-- Layout Margins -->
+    <dimen name="screen_margin_horizontal">@dimen/spacing_md</dimen>
+    <dimen name="screen_margin_vertical">@dimen/spacing_md</dimen>
+    <dimen name="content_margin">@dimen/spacing_lg</dimen>
+    
+    <!-- Animation Durations -->
+    <integer name="animation_duration_short">150</integer>
+    <integer name="animation_duration_medium">300</integer>
+    <integer name="animation_duration_long">500</integer>
+    
+    <!-- Z-Index System -->
+    <dimen name="z_index_background">0dp</dimen>
+    <dimen name="z_index_content">1dp</dimen>
+    <dimen name="z_index_overlay">2dp</dimen>
+    <dimen name="z_index_modal">3dp</dimen>
+    <dimen name="z_index_tooltip">4dp</dimen>
+</resources>

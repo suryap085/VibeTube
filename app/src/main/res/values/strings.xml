@@ -66,8 +66,54 @@
     <string name="data_deleted">All library data has been deleted</string>
 
     <!-- Settings -->
-    <string name="privacy_data">Privacy &amp; Data</string>
-    <string name="help_feedback">Help &amp; Feedback</string>
     <string name="about">About</string>
+
+    <!-- Ad Unit IDs for Google AdMob -->
+    <string name="banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="native_ad_unit_id">ca-app-pub-3940256099942544/2247696110</string>
+    <string name="interstitial_ad_unit_id">ca-app-pub-3940256099942544/1033173712</string>
+    <string name="rewarded_ad_unit_id">ca-app-pub-3940256099942544/5224354917</string>
+
+    <!-- Firebase Web Client ID for Google Sign-In -->
+    <string name="default_web_client_id">436254934364-your-web-client-id.apps.googleusercontent.com</string>
+
+    <!-- Splash Screen -->
+    <string name="splash_tagline">Your Ultimate Companion</string>
+    <string name="initializing_vibetube">Initializing VibeTube...</string>
+    <string name="syncing_data">Syncing your data...</string>
+    <string name="sync_complete">Sync complete! Loading app...</string>
+    <string name="loading_app">Loading app...</string>
+
+    <!-- Login Activity -->
+    <string name="welcome_to_vibetube">Welcome to VibeTube</string>
+    <string name="sign_in_to_sync">Sign in to sync your data across devices</string>
+    <string name="welcome_back">Welcome back, %s!</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="continue_without_signing_in">Continue without signing in</string>
+    <string name="privacy_protected">Your privacy is protected. We only sync your personal preferences and playlist data.</string>
+    <string name="signing_in">Signing in...</string>
+    <string name="signed_in_as">Signed in as %s</string>
+    <string name="syncing_your_data">Syncing your data...</string>
+    <string name="sync_complete_success">Sync complete!</string>
+    <string name="sync_failed_continue">Sync failed, but you can continue</string>
+    <string name="google_sign_in_failed">Google sign in failed: %s</string>
+    <string name="authentication_failed">Authentication failed: %s</string>
+
+    <!-- Consent Dialog -->
+    <string name="consent_required">Consent Required</string>
+    <string name="consent_message">To enable cross-device sync, we need your consent to:\n\n• Store your preferences and settings in the cloud\n• Sync your playlists and favorites (video IDs only)\n• Sync your watch history metadata\n\nWe will NOT store any YouTube content or violate YouTube\'s policies. Only your personal data and preferences will be synced.</string>
+    <string name="i_agree">I Agree</string>
+    <string name="cancel">Cancel</string>
+    <string name="digital_wellness">Digital Wellness</string>
+    <string name="analytics">Analytics</string>
+    <string name="learning_assistant">Learning Assistant</string>
+    <string name="share_vibetube">Share VibeTube</string>
+    <string name="settings">Settings</string>
+    <string name="cross_device_sync">Cross-Device Sync</string>
+    <string name="privacy_amp_data"><![CDATA[Privacy & Data]]></string>
+    <string name="help_amp_feedback"><![CDATA[Help & Feedback]]></string>
+    <string name="engagement">Engagement</string>
+    <string name="discover">Discover</string>
+    <string name="offline_videos">Offline Videos</string>
 
 </resources>

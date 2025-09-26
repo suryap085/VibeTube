@@ -25,7 +25,7 @@ class WatchHistoryFragment : Fragment() {
     private lateinit var userDataManager: UserDataManager
     private lateinit var engagementAnalytics: EngagementAnalytics
     private lateinit var watchHistoryAdapter: WatchHistoryAdapter
-    
+
     private lateinit var watchHistoryRecyclerView: RecyclerView
     private lateinit var emptyStateLayout: View
     private lateinit var loadingStateLayout: View
@@ -55,7 +55,7 @@ class WatchHistoryFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
+
         initializeManagers()
         initializeViews(view)
         setupRecyclerView()
@@ -90,7 +90,7 @@ class WatchHistoryFragment : Fragment() {
                 handleDeleteHistoryItem(historyItem)
             }
         )
-        
+
         watchHistoryRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = watchHistoryAdapter
@@ -118,18 +118,18 @@ class WatchHistoryFragment : Fragment() {
 
     private fun loadWatchHistory() {
         showLoadingState()
-        
+
         lifecycleScope.launch {
             try {
                 val historyItems = userDataManager.getWatchHistory()
                 val filteredAndSorted = applyFilterAndSort(historyItems)
-                
+
                 if (filteredAndSorted.isEmpty()) {
                     showEmptyState()
                 } else {
                     showContent(filteredAndSorted)
                 }
-                
+
                 engagementAnalytics.trackFeatureUsage("watch_history_viewed")
             } catch (e: Exception) {
                 showError("Failed to load watch history")
@@ -337,7 +337,7 @@ class WatchHistoryFragment : Fragment() {
         watchHistoryRecyclerView.visibility = View.VISIBLE
         emptyStateLayout.visibility = View.GONE
         clearHistoryFab.visibility = View.VISIBLE
-        
+
         watchHistoryAdapter.updateItems(items)
     }
 

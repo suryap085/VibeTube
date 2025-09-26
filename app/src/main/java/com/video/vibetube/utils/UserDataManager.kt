@@ -662,7 +662,7 @@ class UserDataManager(private val context: Context) {
     }
     
     // Internal helper methods
-    private fun getWatchHistoryInternal(): List<WatchHistoryItem> {
+    public fun getWatchHistoryInternal(): List<WatchHistoryItem> {
         val json = prefs.getString(KEY_WATCH_HISTORY, null) ?: return emptyList()
         val type = object : TypeToken<List<WatchHistoryItem>>() {}.type
         return try {
@@ -672,12 +672,12 @@ class UserDataManager(private val context: Context) {
         }
     }
     
-    private fun saveWatchHistory(history: List<WatchHistoryItem>) {
+    public fun saveWatchHistory(history: List<WatchHistoryItem>) {
         val json = gson.toJson(history)
         prefs.edit { putString(KEY_WATCH_HISTORY, json) }
     }
     
-    private fun getFavoritesInternal(): List<FavoriteItem> {
+    public fun getFavoritesInternal(): List<FavoriteItem> {
         val json = prefs.getString(KEY_FAVORITES, null) ?: return emptyList()
         val type = object : TypeToken<List<FavoriteItem>>() {}.type
         return try {
@@ -687,12 +687,12 @@ class UserDataManager(private val context: Context) {
         }
     }
     
-    private fun saveFavorites(favorites: List<FavoriteItem>) {
+    public fun saveFavorites(favorites: List<FavoriteItem>) {
         val json = gson.toJson(favorites)
         prefs.edit { putString(KEY_FAVORITES, json) }
     }
     
-    private fun getPlaylistsInternal(): List<UserPlaylist> {
+    public fun getPlaylistsInternal(): List<UserPlaylist> {
         val json = prefs.getString(KEY_PLAYLISTS, null) ?: return emptyList()
         val type = object : TypeToken<List<UserPlaylist>>() {}.type
         return try {
@@ -702,7 +702,7 @@ class UserDataManager(private val context: Context) {
         }
     }
     
-    private fun savePlaylists(playlists: List<UserPlaylist>) {
+    public fun savePlaylists(playlists: List<UserPlaylist>) {
         val json = gson.toJson(playlists)
         prefs.edit { putString(KEY_PLAYLISTS, json) }
     }
@@ -891,4 +891,10 @@ class UserDataManager(private val context: Context) {
             putString(KEY_FAVORITE_PLAYLISTS, gson.toJson(playlists))
         }
     }
+
+    fun findVideoById(videoId: String): Video? {
+        val allVideos =getPlaylistsInternal().flatMap { it.videos }
+        return allVideos.find { it.videoId == videoId }
+    }
+
 }

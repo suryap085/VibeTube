@@ -32,7 +32,7 @@ class FavoritesFragment : Fragment() {
     private lateinit var socialManager: SocialManager
     private lateinit var playlistManager: com.video.vibetube.utils.PlaylistManager
     private lateinit var favoritesAdapter: FavoritesAdapter
-    
+
     private lateinit var favoritesRecyclerView: RecyclerView
     private lateinit var emptyStateLayout: View
     private lateinit var loadingStateLayout: View
@@ -59,7 +59,7 @@ class FavoritesFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
+
         initializeManagers()
         initializeViews(view)
         setupRecyclerView()
@@ -112,7 +112,7 @@ class FavoritesFragment : Fragment() {
                 handleAddToPlaylist(favorite)
             }
         )
-        
+
         favoritesRecyclerView.apply {
             layoutManager = GridLayoutManager(requireContext(), 2)
             adapter = favoritesAdapter
@@ -307,7 +307,7 @@ class FavoritesFragment : Fragment() {
         }
 
         val actions = arrayOf("Share Selected", "Remove from Favorites", "Export List", "Cancel")
-        
+
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Bulk Actions (${selectedItems.size} items)")
             .setItems(actions) { dialog, which ->
@@ -462,7 +462,7 @@ class FavoritesFragment : Fragment() {
         favoritesRecyclerView.visibility = View.VISIBLE
         emptyStateLayout.visibility = View.GONE
         bulkActionsFab.visibility = if (favorites.isNotEmpty()) View.VISIBLE else View.GONE
-        
+
         favoritesAdapter.updateFavorites(favorites)
     }
 

@@ -1,6 +1,7 @@
 package com.video.vibetube.fragments
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
@@ -9,6 +10,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -61,6 +64,7 @@ class SearchPlaylistsFragment : Fragment() {
     private var searchJob: Job? = null
     private var currentQuery = ""
     private lateinit var playlistsAdapter: PlaylistsAdapter
+    private var query=""
 
     companion object {
         private const val TAG = "SearchPlaylistsFragment"
@@ -137,7 +141,7 @@ class SearchPlaylistsFragment : Fragment() {
 
                 if (query.isEmpty()) {
                     clearSearchResults()
-                } else {
+                } /*else {
                     emptyStateLayout.visibility = View.GONE
                     searchJob = lifecycleScope.launch {
                         delay(SEARCH_DELAY)
@@ -146,9 +150,30 @@ class SearchPlaylistsFragment : Fragment() {
                             performSearch(currentQuery)
                         }
                     }
-                }
+                }*/
             }
         })
+
+        searchEditText.setOnEditorActionListener { v, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                val enteredText = v.text.toString()
+                emptyStateLayout.visibility = View.GONE
+                searchJob = lifecycleScope.launch {
+                    delay(SEARCH_DELAY)
+                    if (enteredText.isNotEmpty()) {
+                        currentQuery = enteredText
+                        performSearch(currentQuery)
+                    }
+                }
+
+                // Hide keyboard
+                val imm = v.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(v.windowToken, 0)
+                //true
+            } else {
+                false
+            }
+        }
     }
 
     private fun setupSwipeRefresh() {

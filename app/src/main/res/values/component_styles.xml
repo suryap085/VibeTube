@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Unified Component Styles for VibeTube -->
+
+    <!-- Base VibeTube Style -->
+    <style name="VibeTube">
+        <!-- Base style for all VibeTube components -->
+    </style>
+
+    <!-- Card Styles -->
+    <style name="VibeTube.Card">
+        <item name="cardCornerRadius">@dimen/card_corner_radius</item>
+        <item name="cardElevation">@dimen/card_elevation</item>
+        <item name="cardBackgroundColor">@android:color/white</item>
+        <item name="android:layout_margin">@dimen/spacing_sm</item>
+    </style>
+    
+    <style name="VibeTube.Card.Video">
+        <item name="android:layout_height">@dimen/video_card_height</item>
+        <item name="cardCornerRadius">@dimen/corner_radius_lg</item>
+    </style>
+    
+    <style name="VibeTube.Card.Achievement">
+        <item name="android:layout_height">@dimen/achievement_card_height</item>
+        <item name="cardCornerRadius">@dimen/corner_radius_md</item>
+    </style>
+    
+    <style name="VibeTube.Card.Playlist">
+        <item name="android:layout_height">@dimen/playlist_card_height</item>
+        <item name="cardCornerRadius">@dimen/corner_radius_lg</item>
+    </style>
+    
+    <!-- Button Styles -->
+    <style name="VibeTube.Button">
+        <item name="android:minHeight">@dimen/touch_target_comfortable</item>
+        <item name="android:textSize">@dimen/text_size_md</item>
+        <item name="android:letterSpacing">0.01</item>
+    </style>
+
+    <style name="VibeTube.Button.Primary">
+        <item name="android:background">@android:color/holo_blue_bright</item>
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
+    <style name="VibeTube.Button.Secondary">
+        <item name="android:minHeight">@dimen/touch_target_comfortable</item>
+        <item name="android:textColor">@android:color/holo_blue_bright</item>
+    </style>
+
+    <style name="VibeTube.Button.Text">
+        <item name="android:minHeight">@dimen/touch_target_comfortable</item>
+        <item name="android:textColor">@android:color/holo_blue_bright</item>
+    </style>
+    
+    <!-- FAB Styles -->
+    <style name="VibeTube.FAB">
+        <item name="android:elevation">@dimen/fab_elevation</item>
+        <item name="android:background">@android:color/holo_blue_bright</item>
+    </style>
+
+    <style name="VibeTube.FAB.Extended">
+        <item name="android:elevation">@dimen/fab_elevation</item>
+        <item name="android:background">@android:color/holo_blue_bright</item>
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+    
+    <!-- Text Styles -->
+    <style name="VibeTube.Text">
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="VibeTube.Text.Headline">
+        <item name="android:textSize">@dimen/text_size_display</item>
+        <item name="android:lineHeight">@dimen/line_height_xl</item>
+    </style>
+
+    <style name="VibeTube.Text.Title">
+        <item name="android:textSize">@dimen/text_size_xl</item>
+        <item name="android:lineHeight">@dimen/line_height_lg</item>
+    </style>
+
+    <style name="VibeTube.Text.Body">
+        <item name="android:textSize">@dimen/text_size_md</item>
+        <item name="android:lineHeight">@dimen/line_height_md</item>
+    </style>
+
+    <style name="VibeTube.Text.Caption">
+        <item name="android:textSize">@dimen/text_size_sm</item>
+        <item name="android:textColor">@android:color/darker_gray</item>
+        <item name="android:lineHeight">@dimen/line_height_sm</item>
+    </style>
+    
+    <!-- Input Styles -->
+    <style name="VibeTube.TextInputLayout">
+        <item name="android:background">@android:color/white</item>
+    </style>
+
+    <!-- Progress Indicators -->
+    <style name="VibeTube.ProgressBar">
+        <item name="android:progressTint">@android:color/holo_blue_bright</item>
+    </style>
+
+    <style name="VibeTube.ProgressBar.Circular">
+        <item name="android:indeterminateTint">@android:color/holo_blue_bright</item>
+    </style>
+
+    <!-- Chip Styles -->
+    <style name="VibeTube.Chip">
+        <item name="android:background">@android:color/white</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <!-- Bottom Sheet Styles -->
+    <style name="VibeTube.BottomSheet">
+        <item name="android:background">@android:color/white</item>
+    </style>
+
+    <!-- Dialog Styles -->
+    <style name="VibeTube.Dialog">
+        <item name="android:background">@android:color/white</item>
+    </style>
+
+    <!-- Toolbar Styles -->
+    <style name="VibeTube.Toolbar">
+        <item name="android:background">@android:color/white</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <!-- Tab Layout Styles -->
+    <style name="VibeTube.TabLayout">
+        <item name="android:background">@android:color/white</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+</resources>

@@ -145,15 +145,17 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="4dp"
                     android:text="•"
+                    android:visibility="gone"
                     android:textColor="@color/text_tertiary"
                     android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/publishedTextView"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:textColor="@color/text_tertiary"
                     android:textSize="12sp"
+                    android:visibility="gone"
                     tools:text="2 days ago" />
 
             </LinearLayout>

@@ -105,6 +105,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Created today"
+                    android:visibility="gone"
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
 

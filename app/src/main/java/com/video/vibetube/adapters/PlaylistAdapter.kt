@@ -61,12 +61,12 @@ class PlaylistAdapter(
             // Dates
             createdDateTextView.text = "Created ${formatDate(playlist.createdAt)}"
             
-            if (playlist.updatedAt != playlist.createdAt) {
+          /*  if (playlist.updatedAt != playlist.createdAt) {
                 updatedDateTextView.text = "Updated ${formatDate(playlist.updatedAt)}"
                 updatedDateTextView.visibility = View.VISIBLE
             } else {
                 updatedDateTextView.visibility = View.GONE
-            }
+            }*/
 
             // Handle empty playlist
             if (videoCount == 0) {

@@ -80,6 +80,9 @@ class ChannelVideosActivity : AppCompatActivity() {
 
         toolbar = findViewById(R.id.topAppBar)
         toolbar.title = channelTitle
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setHomeButtonEnabled(true)
         toolbar.setNavigationOnClickListener { finish() }
 
         recyclerView = findViewById(R.id.recyclerView)
@@ -162,7 +165,11 @@ class ChannelVideosActivity : AppCompatActivity() {
         quotaManager = QuotaManager(this)
         uploadsPlaylistCache = UploadsPlaylistCache(this)
         videosCache = SearchVideoCacheManager(this)
+
+        // Initialize Enhanced AdManager with YouTube Policy compliance
         adManager = AdManager(this)
+        adManager.resetSessionAdCount() // Reset for new session
+        adManager.handleConsent(this)
 
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
@@ -263,7 +270,11 @@ class ChannelVideosActivity : AppCompatActivity() {
             setAdSize(AdSize.BANNER)
         }
         adContainer.addView(adView)
-        adManager.loadBannerAd(adView!!)
+        // Load banner ad with YouTube content context for policy compliance
+        adManager.loadBannerAd(adView!!, AdManager.YOUTUBE_CONTENT_CONTEXT)
+
+        // Load interstitial ad for strategic placement
+        adManager.loadInterstitialAd(AdManager.YOUTUBE_CONTENT_CONTEXT)
     }
 
     private fun setupSwipeRefresh() {

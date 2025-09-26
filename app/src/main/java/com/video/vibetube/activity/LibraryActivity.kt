@@ -17,6 +17,8 @@ import com.video.vibetube.models.Video
 import com.video.vibetube.utils.UserDataManager
 import com.video.vibetube.utils.AchievementManager
 import com.video.vibetube.utils.SocialManager
+import com.video.vibetube.utils.AdManager
+import com.google.android.gms.ads.AdView
 import kotlinx.coroutines.launch
 
 /**
@@ -40,7 +42,11 @@ class LibraryActivity : AppCompatActivity() {
     private lateinit var userDataManager: UserDataManager
     private lateinit var achievementManager: AchievementManager
     private lateinit var socialManager: SocialManager
-    
+
+    // Enhanced Ad Management
+    private lateinit var adManager: AdManager
+    private var bannerAdView: AdView? = null
+
     private var initialSection: String? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,9 +60,14 @@ class LibraryActivity : AppCompatActivity() {
         userDataManager = UserDataManager.getInstance(this)
         achievementManager = AchievementManager.getInstance(this)
         socialManager = SocialManager.getInstance(this)
-        
+
+        // Initialize Enhanced Ad Management
+        adManager = AdManager(this)
+        adManager.handleConsent(this)
+
         initViews()
         setupToolbar()
+        setupAds()
         checkUserConsent()
     }
     
@@ -358,11 +369,37 @@ class LibraryActivity : AppCompatActivity() {
         }
     }
     
+    /**
+     * Setup ads for Library Activity with YouTube Policy compliance
+     */
+    private fun setupAds() {
+        // Find banner ad container in layout (if exists)
+        bannerAdView = findViewById<AdView?>(R.id.libraryBannerAd)
+        bannerAdView?.let { adView ->
+            // Load banner ad with general content context (not YouTube specific)
+            adManager.loadBannerAd(adView, AdManager.NON_YOUTUBE_CONTEXT)
+        }
+
+        // Load interstitial ad for strategic placement between sections
+        adManager.loadInterstitialAd(AdManager.NON_YOUTUBE_CONTEXT)
+    }
+
     override fun onResume() {
         super.onResume()
+        bannerAdView?.let { adManager.resumeBannerAd(it) }
         if (userDataManager.hasUserConsent()) {
             // Refresh content if needed
             (viewPager.adapter as? LibraryPagerAdapter)?.notifyDataSetChanged()
         }
+    }
+
+    override fun onPause() {
+        bannerAdView?.let { adManager.pauseBannerAd(it) }
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        bannerAdView?.let { adManager.destroyBannerAd(it) }
+        super.onDestroy()
     }
 }

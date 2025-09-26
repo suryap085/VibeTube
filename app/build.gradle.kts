@@ -18,20 +18,29 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(project.property("RELEASE_STORE_FILE") as String)
+            storePassword = project.property("RELEASE_STORE_PASSWORD") as String
+            keyAlias = project.property("RELEASE_KEY_ALIAS") as String
+            keyPassword = project.property("RELEASE_KEY_PASSWORD") as String
+        }
+    }
+
     buildTypes {
-        debug {
+       debug {
             buildConfigField("String", "YOUTUBE_API_KEY", "\"AIzaSyAZHLNOqAy-R6p6PZBqnpj3a53dotM_htM\"")
             buildConfigField("boolean", "IS_DEBUG", "true")
             buildConfigField("int", "DAILY_QUOTA_LIMIT", "10000")
             isDebuggable = true
             isMinifyEnabled = false
         }
-        release {
+        getByName("release") {
             // IMPORTANT: Replace with your production API key
             buildConfigField("String", "YOUTUBE_API_KEY", "\"AIzaSyAZHLNOqAy-R6p6PZBqnpj3a53dotM_htM\"")
             buildConfigField("boolean", "IS_DEBUG", "false")
             buildConfigField("int", "DAILY_QUOTA_LIMIT", "10000")
-
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -88,6 +97,13 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     implementation("com.facebook.shimmer:shimmer:0.5.0")
+
+    // Firebase for Cross-Device Sync (YouTube Policy Compliant)
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

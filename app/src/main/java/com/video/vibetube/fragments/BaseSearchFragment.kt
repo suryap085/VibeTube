@@ -1,6 +1,7 @@
 package com.video.vibetube.fragments
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
@@ -9,6 +10,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -59,6 +62,7 @@ abstract class BaseSearchFragment : Fragment() {
     protected var isLoading = false
     protected var searchJob: Job? = null
     protected var currentQuery = ""
+    protected var query=""
 
     companion object {
         const val TAG = "BaseSearchFragment"
@@ -124,23 +128,35 @@ abstract class BaseSearchFragment : Fragment() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
 
             override fun afterTextChanged(s: Editable?) {
-                val query = s?.toString()?.trim() ?: ""
+                query = s?.toString()?.trim() ?: ""
                 searchJob?.cancel()
 
                 if (query.isEmpty()) {
                     clearSearchResults()
-                } else {
-                    emptyStateLayout.visibility = View.GONE
-                    searchJob = lifecycleScope.launch {
-                        delay(SEARCH_DELAY)
-                        if (query.isNotEmpty()) {
-                            currentQuery = query
-                            performSearch(currentQuery)
-                        }
-                    }
                 }
             }
         })
+
+        searchEditText.setOnEditorActionListener { v, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                emptyStateLayout.visibility = View.GONE
+                searchJob = lifecycleScope.launch {
+                    delay(SEARCH_DELAY)
+                    if (query.isNotEmpty()) {
+                        currentQuery = query
+                        performSearch(currentQuery)
+                    }
+                }
+
+                // Hide keyboard
+                val imm = v.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(v.windowToken, 0)
+                true
+            } else {
+                false
+            }
+        }
+
     }
 
     private fun setupSwipeRefresh() {

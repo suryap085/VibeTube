@@ -38,13 +38,12 @@ import com.video.vibetube.models.Video
 import com.video.vibetube.models.YouTubeSearchItem
 import com.video.vibetube.network.YouTubeApiService
 import com.video.vibetube.network.createYouTubeService
-import com.video.vibetube.utils.Utility
-import com.video.vibetube.utils.UserDataManager
 import com.video.vibetube.utils.SocialManager
-import kotlinx.coroutines.launch
-import androidx.lifecycle.lifecycleScope
+import com.video.vibetube.utils.UserDataManager
+import com.video.vibetube.utils.Utility
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class YouTubePlayerActivity : AppCompatActivity() {
 
@@ -209,7 +208,7 @@ class YouTubePlayerActivity : AppCompatActivity() {
                                 Toast.makeText(this@YouTubePlayerActivity, "Already in favorites or limit reached", Toast.LENGTH_SHORT).show()
                             }
                         }
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         Toast.makeText(this@YouTubePlayerActivity, "Failed to update favorites", Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -246,7 +245,7 @@ class YouTubePlayerActivity : AppCompatActivity() {
                 val currentVideo = videos[currentVideoIndex]
                 try {
                     socialManager.shareVideo(currentVideo)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     Toast.makeText(this@YouTubePlayerActivity, "Failed to share video", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -300,7 +299,7 @@ class YouTubePlayerActivity : AppCompatActivity() {
                     val currentVideo = if (videos.isNotEmpty() && currentVideoIndex in videos.indices) {
                         videos[currentVideoIndex]
                     } else null
-                    android.util.Log.d("YouTubePlayer", "FullscreenListener - Video: ${currentVideo?.title}, Duration: ${currentVideo?.duration}, IsShort: $isShort, Orientation: ${if (isShort) "Portrait" else "Landscape"}")
+                    Log.d("YouTubePlayer", "FullscreenListener - Video: ${currentVideo?.title}, Duration: ${currentVideo?.duration}, IsShort: $isShort, Orientation: ${if (isShort) "Portrait" else "Landscape"}")
                 }
                 headerLayout.isVisible = false
                 videoInfoLayout.isVisible = false
@@ -439,7 +438,7 @@ class YouTubePlayerActivity : AppCompatActivity() {
             val currentVideo = if (videos.isNotEmpty() && currentVideoIndex in videos.indices) {
                 videos[currentVideoIndex]
             } else null
-            android.util.Log.d("YouTubePlayer", "Fullscreen mode - Video: ${currentVideo?.title}, Duration: ${currentVideo?.duration}, IsShort: $isShort, Orientation: ${if (isShort) "Portrait" else "Landscape"}")
+            Log.d("YouTubePlayer", "Fullscreen mode - Video: ${currentVideo?.title}, Duration: ${currentVideo?.duration}, IsShort: $isShort, Orientation: ${if (isShort) "Portrait" else "Landscape"}")
         }
         WindowCompat.getInsetsController(window, window.decorView).apply {
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -513,7 +512,7 @@ class YouTubePlayerActivity : AppCompatActivity() {
             youTubePlayer?.loadVideo(currentVideo.videoId, startPosition)
             updateVideoInfo(currentVideo)
             updateNavigationButtons()
-            //fetchRelatedVideos(currentVideo.title)
+            fetchRelatedVideos(currentVideo.title)
 
             // Show resume toast if starting from saved position
             if (startPosition > 0f) {
@@ -636,7 +635,7 @@ class YouTubePlayerActivity : AppCompatActivity() {
             try {
                 val isFavorite = userDataManager.isFavorite(video.videoId)
                 updateFavoriteButtonState(isFavorite)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Handle error silently
             }
         }
@@ -675,7 +674,7 @@ class YouTubePlayerActivity : AppCompatActivity() {
                     else
                         androidx.core.content.ContextCompat.getColor(this@YouTubePlayerActivity, R.color.white)
                 )
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Handle error silently
             }
         }
@@ -723,12 +722,12 @@ class YouTubePlayerActivity : AppCompatActivity() {
 
                 // Debug logging
                 if (BuildConfig.DEBUG) {
-                    android.util.Log.d("YouTubePlayer", "Video duration check - Title: ${currentVideo.title}, Duration: ${currentVideo.duration}, Seconds: $durationSeconds, IsShort: $isShort")
+                    Log.d("YouTubePlayer", "Video duration check - Title: ${currentVideo.title}, Duration: ${currentVideo.duration}, Seconds: $durationSeconds, IsShort: $isShort")
                 }
 
                 return isShort
             } else if (BuildConfig.DEBUG) {
-                android.util.Log.d("YouTubePlayer", "Main video has no duration - Title: ${currentVideo.title}")
+                Log.d("YouTubePlayer", "Main video has no duration - Title: ${currentVideo.title}")
             }
         }
 
@@ -741,7 +740,7 @@ class YouTubePlayerActivity : AppCompatActivity() {
 
                 // Debug logging
                 if (BuildConfig.DEBUG) {
-                    android.util.Log.d("YouTubePlayer", "Related video duration check - Duration: $durationStr, Seconds: $durationSeconds, IsShort: $isShort")
+                    Log.d("YouTubePlayer", "Related video duration check - Duration: $durationStr, Seconds: $durationSeconds, IsShort: $isShort")
                 }
 
                 return isShort
@@ -750,7 +749,7 @@ class YouTubePlayerActivity : AppCompatActivity() {
 
         // Default to false (landscape) if no duration information is available
         if (BuildConfig.DEBUG) {
-            android.util.Log.d("YouTubePlayer", "No duration information available - defaulting to landscape")
+            Log.d("YouTubePlayer", "No duration information available - defaulting to landscape")
         }
         return false
     }

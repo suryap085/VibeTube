@@ -15,20 +15,25 @@ import androidx.core.view.get
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.widget.ViewPager2
+import com.bumptech.glide.Glide
 import com.google.android.gms.ads.MobileAds
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.navigation.NavigationView
 import com.video.vibetube.BuildConfig
 import com.video.vibetube.R
 import com.video.vibetube.adapters.MainPagerAdapter
+import com.video.vibetube.dialog.MoreBottomSheetDialog
 import com.video.vibetube.utils.AchievementManager
 import com.video.vibetube.utils.AdManager
 import com.video.vibetube.utils.FeatureFlagManager
 import com.video.vibetube.utils.RolloutManager
 import com.video.vibetube.utils.UserDataManager
+import com.video.vibetube.integration.VibeTubeEnhancementIntegrator
+import com.video.vibetube.sync.UserProfileManager
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -49,6 +54,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var featureFlagManager: FeatureFlagManager
     private lateinit var rolloutManager: RolloutManager
 
+    // Enhancement Integration
+    private lateinit var enhancementIntegrator: VibeTubeEnhancementIntegrator
+
+    private lateinit var profileManager: UserProfileManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -67,6 +77,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         userDataManager = UserDataManager(this)
         achievementManager = AchievementManager(this)
 
+        profileManager = UserProfileManager.getInstance(this)
+
+        // Initialize enhancement integrator
+        enhancementIntegrator = VibeTubeEnhancementIntegrator.getInstance(this)
+        enhancementIntegrator.initialize()
+
         initViews()
         setupToolbar()
         setupNavigationDrawer()
@@ -75,6 +91,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         setupSearchFab()
         setupAds()
         setupBackPressedCallback()
+
+        // Initialize enhancements after UI setup
+        initializeEnhancements()
     }
 
     private fun initViews() {
@@ -99,17 +118,26 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     viewPager.currentItem = 0
                     adManager.showInterstitialAd()
                 }
+
                 R.id.nav_shorts -> viewPager.currentItem = 1
                 R.id.nav_comedy -> viewPager.currentItem = 2
                 R.id.nav_movies -> viewPager.currentItem = 3
-                R.id.nav_diy -> viewPager.currentItem = 4
+                R.id.nav_more -> {
+                    val dialog = MoreBottomSheetDialog()
+                    dialog.show(supportFragmentManager, "MoreBottomSheetDialog")
+                    true
+                }
+                else -> false
             }
             true
         }
 
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
-                bottomNavigation.menu[position].isChecked = true
+                when (position) {
+                    in 0..3 -> bottomNavigation.menu[position].isChecked = true
+                    in 3..7 -> bottomNavigation.menu[4].isChecked = true // More selected for sub-fragments
+                }
             }
         })
     }
@@ -123,9 +151,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private fun setupAds() {
         val bannerAdView = findViewById<com.google.android.gms.ads.AdView>(R.id.adView)
-        adManager.loadBannerAd(bannerAdView)
-        adManager.loadInterstitialAd()
+        // Enhanced ad loading with YouTube Policy compliance
+        adManager.loadBannerAd(bannerAdView, AdManager.NON_YOUTUBE_CONTEXT)
+        adManager.loadInterstitialAd(AdManager.NON_YOUTUBE_CONTEXT)
         adManager.handleConsent(this)
+
+        // Reset session ad count for new app session
+        adManager.resetSessionAdCount()
     }
 
     /**
@@ -174,13 +206,34 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val headerView = navigationView.getHeaderView(0)
         val userNameTextView = headerView.findViewById<TextView>(R.id.userNameTextView)
         val userStatsTextView = headerView.findViewById<TextView>(R.id.userStatsTextView)
+        val userAvatarImageView =
+            headerView.findViewById<ShapeableImageView>(R.id.userAvatarImageView)
 
         lifecycleScope.launch {
             if (userDataManager.hasUserConsent()) {
                 val stats = achievementManager.getUserStats()
                 val achievements = achievementManager.getUserAchievements()
 
-                userNameTextView.text = "VibeTube User"
+                val profileResult = profileManager.getUserProfile()
+                if (profileResult.isSuccess) {
+                    val profile = profileResult.getOrNull()!!
+                    userNameTextView.text = profile.displayName
+
+                    // Load profile image
+                    val photoUrl = profileManager.getProfilePhotoUrl()
+                    if (photoUrl != null) {
+                        Glide.with(this@MainActivity)
+                            .load(photoUrl)
+                            .circleCrop()
+                            .placeholder(R.drawable.ic_account_circle)
+                            .into(userAvatarImageView)
+                    } else {
+                        userAvatarImageView.setImageResource(R.drawable.ic_account_circle)
+                    }
+                } else {
+                    userNameTextView.text = "VibeTube"
+                    userAvatarImageView.setImageResource(R.drawable.ic_account_circle)
+                }
                 userStatsTextView.text = buildString {
                     append("${stats.totalVideosWatched} videos watched")
                     if (achievements.isNotEmpty()) {
@@ -221,39 +274,67 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             R.id.nav_watch_history -> {
                 openLibrarySection("history")
             }
+
             R.id.nav_favorites -> {
                 openLibrarySection("favorites")
             }
+
             R.id.nav_playlists -> {
                 openLibrarySection("playlists")
             }
+
             R.id.nav_recommendations -> {
                 openLibrarySection("recommendations")
             }
+
             R.id.nav_trending -> {
                 openLibrarySection("trending")
             }
+
             R.id.nav_categories -> {
                 openLibrarySection("categories")
             }
+
             R.id.nav_achievements -> {
                 openLibrarySection("achievements")
             }
+
+            R.id.nav_analytics -> {
+                openAnalyticsDashboard()
+            }
+
+            R.id.nav_wellness -> {
+                openWellnessDashboard()
+            }
+
+            R.id.nav_learning -> {
+                openLearningAssistant()
+            }
+
             R.id.nav_share_app -> {
                 shareApp()
             }
+
+            R.id.nav_sync_setup -> {
+                openSyncSetup()
+            }
+
             R.id.nav_settings -> {
                 openSettings()
             }
+
             R.id.nav_privacy -> {
                 openPrivacySettings()
             }
+
             R.id.nav_help -> {
                 openHelp()
             }
+
             R.id.nav_about -> {
                 openAbout()
             }
+
         }
 
         drawerLayout.closeDrawer(GravityCompat.START)
@@ -282,7 +363,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
         startActivity(intent)
     }
-
 
 
     /**
@@ -335,7 +415,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 openLibrarySection("settings")
             }
             .setNeutralButton("📤 Export Data") { _, _ ->
-                Toast.makeText(this, "📊 Data export feature available in Library Settings", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this,
+                    "📊 Data export feature available in Library Settings",
+                    Toast.LENGTH_LONG
+                ).show()
                 openLibrarySection("settings")
             }
             .setNegativeButton("Close", null)
@@ -413,7 +497,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 if (emailIntent.resolveActivity(packageManager) != null) {
                     startActivity(emailIntent)
                 } else {
-                    Toast.makeText(this@MainActivity, "📧 No email app found", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "📧 No email app found", Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
             .setNeutralButton("⚙️ View Settings") { _, _ ->
@@ -485,7 +570,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     startActivity(rateIntent)
                 } else {
                     val webIntent = Intent(Intent.ACTION_VIEW).apply {
-                        data = Uri.parse("https://play.google.com/store/apps/details?id=$packageName")
+                        data =
+                            Uri.parse("https://play.google.com/store/apps/details?id=$packageName")
                     }
                     startActivity(webIntent)
                 }
@@ -533,6 +619,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         })
     }
 
+    // Method for BottomSheetDialog to navigate to fragments
+    fun navigateToFragment(position: Int) {
+        viewPager.currentItem = position
+    }
+
     /**
      * Show feature not available message
      */
@@ -559,5 +650,267 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             .setMessage(message)
             .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
             .show()
+    }
+
+    /**
+     * Initialize all enhancement features
+     */
+    private fun initializeEnhancements() {
+        lifecycleScope.launch {
+            try {
+                // Get enhancement status
+                val status = enhancementIntegrator.getEnhancementStatus()
+
+                // Show enhancement status in debug mode
+                if (BuildConfig.IS_DEBUG) {
+                    val message = "VibeTube Enhancements Active!\n" +
+                            "Performance Score: ${(status.performanceScore * 100).toInt()}%\n" +
+                            "Accessibility Score: ${(status.accessibilityScore * 100).toInt()}%\n" +
+                            "Features Enabled: ${status.featuresEnabled.count { it.value }}"
+
+                    Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
+                }
+
+                // Check if break should be suggested
+                if (enhancementIntegrator.shouldSuggestBreak()) {
+                    val breakSuggestion = enhancementIntegrator.getBreakSuggestion()
+                    showWellnessBreakSuggestion(breakSuggestion)
+                }
+
+            } catch (e: Exception) {
+                // Silently handle enhancement initialization errors
+                e.printStackTrace()
+            }
+        }
+    }
+
+    /**
+     * Show wellness break suggestion
+     */
+    private fun showWellnessBreakSuggestion(suggestion: com.video.vibetube.wellness.DigitalWellnessManager.WellnessRecommendation) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("💚 ${suggestion.title}")
+            .setMessage(suggestion.description)
+            .setPositiveButton("Take Break") { dialog, _ ->
+                dialog.dismiss()
+                // Could pause video or show break screen
+            }
+            .setNegativeButton("Continue") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    /**
+     * Open Analytics Dashboard
+     */
+    private fun openAnalyticsDashboard() {
+        lifecycleScope.launch {
+            try {
+                Toast.makeText(this@MainActivity, "📊 Loading your analytics...", Toast.LENGTH_SHORT)
+                    .show()
+
+                val insights = enhancementIntegrator.getIntegratedInsights()
+
+                val message = buildString {
+                    appendLine("📊 Your Personal Viewing Analytics")
+                    appendLine()
+                    appendLine("📺 Videos Watched: ${insights.analytics.totalVideosWatched}")
+                    appendLine("⏱️ Total Watch Time: ${formatWatchTime(insights.analytics.totalWatchTime)}")
+                    appendLine("✅ Completion Rate: ${(insights.analytics.completionRate * 100).toInt()}%")
+                    appendLine("📈 Average Session: ${formatWatchTime(insights.analytics.averageSessionDuration)}")
+                    appendLine()
+                    appendLine("🎯 Top Categories:")
+                    insights.analytics.categoryPreferences.take(3).forEach { category ->
+                        appendLine("• ${category.category}: ${category.videosCount} videos")
+                    }
+                    appendLine()
+                    appendLine("📅 Viewing Patterns:")
+                    appendLine("• Preferred time: ${insights.analytics.viewingPatterns.preferredTimeOfDay}")
+                    appendLine("• Preferred day: ${insights.analytics.viewingPatterns.preferredDayOfWeek}")
+                    appendLine(
+                        "• Sessions per day: ${
+                            String.format(
+                                "%.1f",
+                                insights.analytics.viewingPatterns.averageSessionsPerDay
+                            )
+                        }"
+                    )
+                    appendLine()
+                    appendLine("💚 Wellness Score: ${(insights.wellness.wellnessScore * 100).toInt()}%")
+                    appendLine("🎓 Learning Progress: ${insights.learning.skillProgression.size} skills")
+                    appendLine("⭐ Content Quality: ${(insights.quality.averageQuality * 100).toInt()}%")
+                    appendLine()
+                    appendLine("💡 Personalized Recommendations:")
+                    insights.recommendations.take(3).forEach { rec ->
+                        appendLine("• $rec")
+                    }
+                }
+
+                MaterialAlertDialogBuilder(this@MainActivity)
+                    .setTitle("📊 Your Analytics Dashboard")
+                    .setMessage(message)
+                    .setPositiveButton("Great!") { dialog, _ -> dialog.dismiss() }
+                    .setNeutralButton("Export Data") { dialog, _ ->
+                        // Could implement data export functionality
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Export feature coming soon!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        dialog.dismiss()
+                    }
+                    .show()
+
+            } catch (e: Exception) {
+                val errorMsg =
+                    "Analytics temporarily unavailable. ${e.message ?: "Please try again later."}"
+                Toast.makeText(this@MainActivity, errorMsg, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    /**
+     * Open Wellness Dashboard
+     */
+    private fun openWellnessDashboard() {
+        lifecycleScope.launch {
+            try {
+                Toast.makeText(
+                    this@MainActivity,
+                    "💚 Loading wellness insights...",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                val insights = enhancementIntegrator.getIntegratedInsights()
+                val wellnessRecs = enhancementIntegrator.getWellnessRecommendations()
+
+                val message = buildString {
+                    appendLine("💚 Your Digital Wellness Dashboard")
+                    appendLine()
+                    appendLine("📊 Wellness Overview:")
+                    appendLine("• Overall Score: ${(insights.wellness.wellnessScore * 100).toInt()}%")
+                    appendLine("• Daily Screen Time: ${formatWatchTime(insights.wellness.dailyScreenTime)}")
+                    appendLine("• Break Frequency: ${insights.wellness.breakFrequency} per hour")
+                    appendLine("• Binge Risk: ${insights.wellness.bingeWatchingRisk}")
+                    appendLine()
+                    appendLine("🎯 Wellness Achievements:")
+                    insights.wellness.achievements.take(3).forEach { achievement ->
+                        appendLine("• ${achievement.title}")
+                    }
+                    appendLine()
+                    appendLine("💡 Personalized Recommendations:")
+                    wellnessRecs.take(5).forEach { rec ->
+                        appendLine("• ${rec.title}")
+                        appendLine("  ${rec.description}")
+                    }
+                    appendLine()
+                    appendLine("🌟 Keep up the great work on your digital wellness journey!")
+                }
+
+                MaterialAlertDialogBuilder(this@MainActivity)
+                    .setTitle("💚 Digital Wellness")
+                    .setMessage(message)
+                    .setPositiveButton("Thanks!") { dialog, _ -> dialog.dismiss() }
+                    .setNeutralButton("Take Break") { dialog, _ ->
+                        dialog.dismiss()
+                        // Could implement break screen or pause functionality
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Great idea! Take a 5-minute break 😊",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                    .show()
+
+            } catch (e: Exception) {
+                val errorMsg =
+                    "Wellness insights temporarily unavailable. ${e.message ?: "Please try again later."}"
+                Toast.makeText(this@MainActivity, errorMsg, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    /**
+     * Open Learning Assistant
+     */
+    private fun openLearningAssistant() {
+        lifecycleScope.launch {
+            try {
+                Toast.makeText(
+                    this@MainActivity,
+                    "🎓 Loading learning insights...",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                val insights = enhancementIntegrator.getIntegratedInsights()
+                val learningRecs = enhancementIntegrator.getLearningRecommendations()
+
+                val message = buildString {
+                    appendLine("🎓 Your Learning Assistant Dashboard")
+                    appendLine()
+                    appendLine("📚 Learning Progress:")
+                    appendLine("• Total Learning Time: ${formatWatchTime(insights.learning.totalLearningTime)}")
+                    appendLine("• Skills in Progress: ${insights.learning.skillProgression.size}")
+                    appendLine("• Focus Score: ${(insights.learning.focusScore * 100).toInt()}%")
+                    appendLine("• Learning Streak: ${insights.learning.learningStreak} days")
+                    appendLine("• Weekly Goal Progress: ${(insights.learning.weeklyGoalProgress * 100).toInt()}%")
+                    appendLine()
+                    appendLine("🏆 Skills in Progress:")
+                    insights.learning.skillProgression.entries.take(5).forEach { (skill, level) ->
+                        appendLine("• $skill: $level")
+                    }
+                    appendLine()
+                    appendLine("💡 Recommended Next Steps:")
+                    learningRecs.take(5).forEach { rec ->
+                        appendLine("• $rec")
+                    }
+                    appendLine()
+                    appendLine("🌟 Keep learning and growing!")
+                }
+
+                MaterialAlertDialogBuilder(this@MainActivity)
+                    .setTitle("🎓 Learning Assistant")
+                    .setMessage(message)
+                    .setPositiveButton("Continue Learning!") { dialog, _ -> dialog.dismiss() }
+                    .setNeutralButton("Set Goal") { dialog, _ ->
+                        dialog.dismiss()
+                        // Could implement goal setting functionality
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Goal setting feature coming soon!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    .show()
+
+            } catch (e: Exception) {
+                val errorMsg =
+                    "Learning insights temporarily unavailable. ${e.message ?: "Please try again later."}"
+                Toast.makeText(this@MainActivity, errorMsg, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    /**
+     * Format watch time in hours and minutes
+     */
+    private fun formatWatchTime(milliseconds: Long): String {
+        val hours = milliseconds / (1000 * 60 * 60)
+        val minutes = (milliseconds % (1000 * 60 * 60)) / (1000 * 60)
+        return when {
+            hours > 0 -> "${hours}h ${minutes}m"
+            minutes > 0 -> "${minutes}m"
+            else -> "< 1m"
+        }
+    }
+
+    /**
+     * Open cross-device sync setup
+     */
+    private fun openSyncSetup() {
+        val intent = Intent(this, SyncSetupActivity::class.java)
+        startActivity(intent)
+        drawerLayout.closeDrawer(GravityCompat.START)
     }
 }

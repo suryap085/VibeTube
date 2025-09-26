@@ -8,73 +8,90 @@
         <item
             android:id="@+id/nav_watch_history"
             android:icon="@drawable/ic_history"
-            android:title="Watch History" />
+            android:title="@string/watch_history" />
         <item
             android:id="@+id/nav_favorites"
             android:icon="@drawable/ic_favorite"
-            android:title="Favorites" />
+            android:title="@string/favorites" />
         <item
             android:id="@+id/nav_playlists"
             android:icon="@drawable/ic_playlist_play"
-            android:title="My Playlists" />
+            android:title="@string/my_playlists" />
         <item
             android:id="@+id/nav_downloads"
             android:icon="@drawable/ic_download"
-            android:title="Offline Videos"
+            android:title="@string/offline_videos"
             android:visible="false" />
     </group>
 
     <!-- Divider -->
-    <item android:title="Discover">
+    <item android:title="@string/discover">
         <menu>
             <item
                 android:id="@+id/nav_recommendations"
                 android:icon="@drawable/ic_recommend"
-                android:title="For You" />
+                android:title="@string/for_you" />
             <item
                 android:id="@+id/nav_trending"
                 android:icon="@drawable/ic_trending_up"
-                android:title="Trending" />
+                android:title="@string/trending" />
             <item
                 android:id="@+id/nav_categories"
                 android:icon="@drawable/ic_category"
-                android:title="Categories" />
+                android:title="@string/categories" />
         </menu>
     </item>
 
     <!-- Divider -->
-    <item android:title="Engagement">
+    <item android:title="@string/engagement">
         <menu>
             <item
                 android:id="@+id/nav_achievements"
                 android:icon="@drawable/ic_achievement"
-                android:title="Achievements" />
+                android:title="@string/achievements" />
+            <item
+                android:id="@+id/nav_analytics"
+                android:icon="@drawable/ic_analytics"
+                android:title="@string/analytics" />
+            <item
+                android:id="@+id/nav_wellness"
+                android:icon="@drawable/ic_wellness"
+                android:title="@string/digital_wellness" />
+            <item
+                android:id="@+id/nav_learning"
+                android:icon="@drawable/ic_school"
+                android:title="@string/learning_assistant" />
             <item
                 android:id="@+id/nav_share_app"
                 android:icon="@drawable/ic_share"
-                android:title="Share VibeTube" />
+                android:title="@string/share_vibetube" />
         </menu>
     </item>
 
     <!-- Divider -->
-    <item android:title="Settings">
+    <item android:title="@string/settings">
         <menu>
+            <item
+                android:id="@+id/nav_sync_setup"
+                android:icon="@drawable/ic_sync"
+                android:title="@string/cross_device_sync" />
             <item
                 android:id="@+id/nav_settings"
                 android:icon="@drawable/ic_settings"
-                android:title="Settings" />
+                android:title="@string/settings" />
             <item
                 android:id="@+id/nav_privacy"
                 android:icon="@drawable/ic_privacy"
-                android:title="Privacy &amp; Data" />
+                android:title="@string/privacy_amp_data" />
             <item
                 android:id="@+id/nav_help"
                 android:icon="@drawable/ic_help"
-                android:title="Help &amp; Feedback" />
+                android:title="@string/help_amp_feedback" />
             <item
                 android:id="@+id/nav_about"
                 android:icon="@drawable/ic_info"
-                android:title="About" />
+                android:title="@string/about" />
+
         </menu>
     </item>
 

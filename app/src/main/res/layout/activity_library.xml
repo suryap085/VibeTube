@@ -9,7 +9,10 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        app:liftOnScroll="true"
+        android:fitsSystemWindows="true"
         android:background="@color/background_primary"
+        app:statusBarForeground="@color/background_primary"
         android:elevation="4dp">
 
         <com.google.android.material.appbar.MaterialToolbar
@@ -18,6 +21,8 @@
             android:layout_height="?attr/actionBarSize"
             android:background="@color/background_primary"
             app:title="Library"
+            app:contentInsetStartWithNavigation="0dp"
+            app:layout_scrollFlags="scroll|enterAlways|snap"
             app:titleTextColor="@color/text_primary"
             app:navigationIconTint="@color/text_primary" />
 
@@ -34,11 +39,29 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/libraryViewPager"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+        android:orientation="vertical"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/libraryViewPager"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Banner Ad Container for Library -->
+        <com.google.android.gms.ads.AdView
+            android:id="@+id/libraryBannerAd"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            app:adSize="BANNER"
+            app:adUnitId="@string/banner_ad_unit_id"
+            android:visibility="visible" />
+
+    </LinearLayout>
 
     <!-- Floating Action Button for Quick Actions -->
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton

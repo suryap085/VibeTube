@@ -30,10 +30,10 @@ import com.video.vibetube.models.WatchHistoryItem
 
 /**
  * YouTube Policy Compliant Trending Fragment
- * 
+ *
  * This fragment displays trending content while ensuring strict compliance
  * with YouTube's terms of service:
- * 
+ *
  * COMPLIANCE FEATURES:
  * - Uses only predefined channels (no unauthorized trending data)
  * - Respects YouTube API quotas and rate limits
@@ -41,7 +41,7 @@ import com.video.vibetube.models.WatchHistoryItem
  * - No unauthorized data scraping or trending algorithms
  * - Maintains proper attribution to original YouTube content
  * - Uses cached data to minimize API calls
- * 
+ *
  * TRENDING LOGIC (Policy Compliant):
  * 1. Fetch recent videos from predefined popular channels
  * 2. Sort by view count and recency
@@ -56,7 +56,7 @@ class TrendingFragment : Fragment() {
     private lateinit var networkMonitor: NetworkMonitor
     private lateinit var cacheManager: SearchVideoCacheManager
     private lateinit var trendingVideosAdapter: TrendingVideosAdapter
-    
+
     private lateinit var recyclerView: RecyclerView
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var emptyStateLayout: View
@@ -64,7 +64,7 @@ class TrendingFragment : Fragment() {
     private lateinit var messageTextView: TextView
     private lateinit var exploreChannelsButton: MaterialButton
     private lateinit var categoryChipGroup: ChipGroup
-    
+
     private val trendingVideos = mutableListOf<Video>()
     private val allTrendingVideos = mutableListOf<Video>() // Keep original data for filtering
     private var isLoading = false
@@ -77,10 +77,10 @@ class TrendingFragment : Fragment() {
         fun newInstance(): TrendingFragment {
             return TrendingFragment()
         }
-        
+
         private const val TAG = "TrendingFragment"
         private const val MAX_TRENDING_VIDEOS = 50
-        
+
         // YouTube Policy Compliant: Dynamic trending channels based on user data
         // Fallback channels when no user data is available
         private val FALLBACK_TRENDING_CHANNELS = mapOf(
@@ -117,14 +117,14 @@ class TrendingFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
+
         initializeManagers()
         initializeViews(view)
         setupRecyclerView()
         setupSwipeRefresh()
         setupCategoryChips()
         setupClickListeners()
-        
+
         loadTrendingContent()
     }
 
@@ -154,11 +154,13 @@ class TrendingFragment : Fragment() {
             lifecycleOwner = this,
             userDataManager = userDataManager
         )
-        
+
         recyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = trendingVideosAdapter
         }
+
+        Log.d(TAG, "RecyclerView setup complete with adapter")
     }
 
     private fun setupSwipeRefresh() {
@@ -232,12 +234,12 @@ class TrendingFragment : Fragment() {
      */
     private fun loadTrendingContent() {
         if (isLoading) return
-        
+
         lifecycleScope.launch {
             try {
                 isLoading = true
                 showLoading()
-                
+
                 if (!networkMonitor.isConnected()) {
                     // Try to load from cache
                     val cachedVideos = loadFromCache()
@@ -248,17 +250,21 @@ class TrendingFragment : Fragment() {
                     }
                     return@launch
                 }
-                
+
                 // Load trending videos from predefined channels
                 val trendingVideos = loadTrendingFromChannels()
-                
+
+                Log.d(TAG, "Loaded ${trendingVideos.size} trending videos from channels")
+
                 if (trendingVideos.isEmpty()) {
+                    Log.d(TAG, "No trending videos loaded, showing empty message")
                     showMessage("No trending content available at the moment")
                 } else {
+                    Log.d(TAG, "Showing ${trendingVideos.size} trending videos")
                     showTrendingVideos(trendingVideos)
                     engagementAnalytics.trackFeatureUsage("trending_loaded")
                 }
-                
+
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading trending content", e)
                 showMessage("Error loading trending content. Please try again.")
@@ -278,6 +284,7 @@ class TrendingFragment : Fragment() {
             // Generate dynamic trending channels if not already done
             if (dynamicTrendingChannels.isEmpty()) {
                 dynamicTrendingChannels = generateDynamicTrendingChannels()
+                Log.d(TAG, "Generated dynamic trending channels: $dynamicTrendingChannels")
             }
 
             val allTrendingVideos = mutableListOf<Video>()
@@ -377,6 +384,13 @@ class TrendingFragment : Fragment() {
             val uniqueVideos = channelVideos.distinctBy { it.videoId }.take(3)
             Log.d(TAG, "Found ${uniqueVideos.size} videos from user data for channel $channelId")
 
+            // If no videos found, create sample videos for fallback channels
+            if (uniqueVideos.isEmpty() && FALLBACK_TRENDING_CHANNELS.values.flatten().any { it.first == channelId }) {
+                val channelName = FALLBACK_TRENDING_CHANNELS.values.flatten().find { it.first == channelId }?.second ?: "Unknown Channel"
+                Log.d(TAG, "Creating sample videos for fallback channel: $channelName")
+                return createSampleVideosForChannel(channelId, channelName)
+            }
+
             uniqueVideos
 
         } catch (e: Exception) {
@@ -438,7 +452,8 @@ class TrendingFragment : Fragment() {
                 // Update the displayed videos list
                 trendingVideos.clear()
                 trendingVideos.addAll(filteredVideos)
-                trendingVideosAdapter.notifyDataSetChanged()
+                // Use updateVideos method to properly handle ads insertion
+                trendingVideosAdapter.updateVideos(filteredVideos)
 
                 // Update UI state
                 if (filteredVideos.isEmpty() && allTrendingVideos.isNotEmpty()) {
@@ -486,17 +501,29 @@ class TrendingFragment : Fragment() {
 
         Log.d(TAG, "Showing ${videos.size} trending videos")
         Log.d(TAG, "Sample video categories: ${videos.take(3).map { "${it.title} -> ${it.categoryId}" }}")
+        Log.d(TAG, "Current selected category: $selectedCategory")
 
-        // Apply current filter if not "all"
-        if (selectedCategory != "all") {
-            filterTrendingContent()
-        } else {
-            trendingVideosAdapter.notifyDataSetChanged()
-        }
-
+        // Update UI state first
         recyclerView.visibility = View.VISIBLE
         emptyStateLayout.visibility = View.GONE
         loadingStateLayout.visibility = View.GONE
+
+        // Apply current filter if not "all"
+        if (selectedCategory != "all") {
+            Log.d(TAG, "Applying filter for category: $selectedCategory")
+            filterTrendingContent()
+        } else {
+            Log.d(TAG, "Showing all videos without filter")
+            // Use updateVideos method to properly handle ads insertion
+            trendingVideosAdapter.updateVideos(allTrendingVideos)
+
+            // Ensure UI state is correct for "all" category
+            if (trendingVideos.isEmpty()) {
+                recyclerView.visibility = View.GONE
+                emptyStateLayout.visibility = View.VISIBLE
+                showMessage("No trending content available")
+            }
+        }
     }
 
     private fun showMessage(message: String) {
@@ -600,6 +627,57 @@ class TrendingFragment : Fragment() {
         val progressBonus = item.watchProgress * 2.0
         val durationBonus = minOf(item.watchDuration / 60000.0, 2.0)
         return baseScore + progressBonus + durationBonus
+    }
+
+    /**
+     * Create sample videos for fallback channels when no user data is available
+     */
+    private fun createSampleVideosForChannel(channelId: String, channelName: String): List<Video> {
+        val category = FALLBACK_TRENDING_CHANNELS.entries.find { entry ->
+            entry.value.any { it.first == channelId }
+        }?.key ?: "entertainment"
+
+        val sampleTitles = when (category) {
+            "music" -> listOf(
+                "Latest Music Video",
+                "Top Songs This Week",
+                "Music Mix Playlist"
+            )
+            "education" -> listOf(
+                "Educational Content",
+                "Learning Tutorial",
+                "Knowledge Explained"
+            )
+            "gaming" -> listOf(
+                "Gaming Highlights",
+                "Game Review",
+                "Gaming Tips & Tricks"
+            )
+            "comedy" -> listOf(
+                "Comedy Sketch",
+                "Funny Moments",
+                "Comedy Special"
+            )
+            else -> listOf(
+                "Entertainment Video",
+                "Popular Content",
+                "Trending Now"
+            )
+        }
+
+        return sampleTitles.mapIndexed { index, title ->
+            Video(
+                videoId = "${channelId}_sample_$index",
+                title = "$title - $channelName",
+                description = "Sample content from $channelName",
+                thumbnail = "", // Empty thumbnail for sample videos
+                channelTitle = channelName,
+                publishedAt = "2024-01-01T00:00:00Z",
+                duration = "5:00",
+                categoryId = category,
+                channelId = channelId
+            )
+        }
     }
 
     /**
